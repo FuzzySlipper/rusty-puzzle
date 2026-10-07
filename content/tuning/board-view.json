@@ -2,7 +2,7 @@
   "pitchDegrees": 90,
   "fill": 0.86,
   "cellGap": 0.06,
-  "checkerShade": 0.8,
+  "checkerShade": 0.7,
   "piece": { "width": 0.56, "height": 0.8 },
   "selection": { "colour": [0.95, 0.95, 0.95], "inset": 0.02, "height": 0.04 },
   "destination": { "colour": [0.35, 0.75, 1.0], "inset": 0.12, "height": 0.03 },

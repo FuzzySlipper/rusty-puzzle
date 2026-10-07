@@ -1,6 +1,6 @@
 {
   "name": "Borrowed Footing",
-  "brief": "The scholar lends a straight step to anyone standing beside it, and a straight step changes the rogue's colour.",
+  "brief": "The scholar lends a straight step to anyone standing beside it, and a straight step moves the rogue to the other shade of the checkerboard.",
   "intent": "combination",
   "rows": [
     "#######",

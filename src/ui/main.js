@@ -45,7 +45,13 @@ export function mountProductUi(root, context) {
   rooms.style.cssText = 'font:inherit;padding:2px 4px;background:#22222a;color:inherit;border:1px solid #555;border-radius:4px';
   picker.append(pickerLabel, rooms);
   let roomCommands = [];
-  rooms.addEventListener('change', () => send(roomCommands[rooms.selectedIndex]));
+  // The room the player last chose, until a projection shows it current: projections that arrive in
+  // between describe an earlier choice and must not move the picker back under the player's keys.
+  let chosenRoom = null;
+  rooms.addEventListener('change', () => {
+    chosenRoom = rooms.selectedIndex;
+    send(roomCommands[chosenRoom]);
+  });
 
   const controls = element('div');
   controls.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px';
@@ -79,7 +85,13 @@ export function mountProductUi(root, context) {
     title.textContent = value.title;
     pickerLabel.textContent = value.labels.rooms;
     roomCommands = value.rooms.map((room) => room.command);
-    rooms.replaceChildren(...value.rooms.map((room) => element('option', { textContent: room.label, selected: room.current })));
+    const current = value.rooms.findIndex((room) => room.current);
+    if (chosenRoom === current) chosenRoom = null;
+    const labels = value.rooms.map((room) => room.label);
+    if (rooms.options.length !== labels.length || labels.some((label, index) => rooms.options[index].textContent !== label)) {
+      rooms.replaceChildren(...labels.map((label) => element('option', { textContent: label })));
+    }
+    if (chosenRoom === null) rooms.selectedIndex = current;
     setFact(roomFact, value.labels.room, value.room);
     brief.textContent = value.brief;
     setFact(moveCountFact, value.labels.moveCount, String(value.moveCount));
