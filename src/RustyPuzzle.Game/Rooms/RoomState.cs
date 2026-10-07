@@ -57,13 +57,4 @@ internal sealed class RoomState
 
         return true;
     }
-
-    /// <summary>Returns every member to the authored start and clears the selection.</summary>
-    internal void Reset()
-    {
-        _placements.Clear();
-        _placements.AddRange(Room.Starts);
-        Selected = null;
-        Revision++;
-    }
 }

@@ -13,7 +13,12 @@ namespace RustyPuzzle.Game.Rooms;
 internal sealed record RoomDefinition(string Name, string[] Rows, Dictionary<string, string> Party, string StartTerrain);
 
 /// <summary>The authored order rooms are played in, <c>content/campaign/rooms.json</c>.</summary>
-internal sealed record RoomOrder(string[] Order);
+internal sealed record RoomOrder(string[] Order)
+{
+    /// <summary>The content domain and bundle: <c>content/campaign/</c>.</summary>
+    internal const string Domain = "campaign";
+    internal const string File = "rooms.json";
+}
 
 /// <summary>Where one party member begins a room.</summary>
 internal readonly record struct Placement(PartyMember Member, Cell Cell);
@@ -21,10 +26,38 @@ internal readonly record struct Placement(PartyMember Member, Cell Cell);
 /// <summary>A room interpreted against the terrain and party vocabularies.</summary>
 internal sealed record Room(string Id, string Name, BoardGrid Grid, IReadOnlyList<Placement> Starts)
 {
-    internal static Room Interpret(string id, RoomDefinition definition, IReadOnlyDictionary<string, TerrainKind> terrain,
+    /// <summary>The content domain and bundle: <c>content/rooms/</c>.</summary>
+    internal const string Domain = "rooms";
+
+    /// <summary>The rooms of the authored order, in play order. Every room the order names must exist and interpret.</summary>
+    internal static IReadOnlyList<Room> Load(AuthoredContent content, IReadOnlyDictionary<string, TerrainKind> terrain,
         IReadOnlyDictionary<string, PartyMember> party)
     {
-        string path = $"rooms/{id}.json";
+        RoomOrder order;
+        using (AuthoredDomain campaign = content.Open(RoomOrder.Domain))
+        {
+            order = campaign.Read(RoomOrder.File, ContentJson.Default.RoomOrder);
+        }
+
+        string orderPath = $"{RoomOrder.Domain}/{RoomOrder.File}";
+        Authored.Require(order.Order.Length > 0, orderPath, "order", "must name at least one room.");
+        using AuthoredDomain domain = content.Open(Domain);
+        IReadOnlyDictionary<string, RoomDefinition> rooms = domain.ReadAll(ContentJson.Default.RoomDefinition);
+        List<Room> ordered = [];
+        foreach (string id in order.Order)
+        {
+            Authored.Require(rooms.TryGetValue(id, out RoomDefinition? room), orderPath, "order",
+                $"names no room '{id}'; the rooms are {string.Join(", ", rooms.Keys)}.");
+            Authored.Require(ordered.All(placed => placed.Id != id), orderPath, "order", $"names '{id}' twice.");
+            ordered.Add(Interpret(domain.PathOf($"{id}.json"), id, room!, terrain, party));
+        }
+
+        return ordered;
+    }
+
+    private static Room Interpret(string path, string id, RoomDefinition definition, IReadOnlyDictionary<string, TerrainKind> terrain,
+        IReadOnlyDictionary<string, PartyMember> party)
+    {
         Authored.Require(definition.Rows.Length > 0 && definition.Rows[0].Length > 0, path, "rows", "must hold at least one cell.");
         int width = definition.Rows[0].Length;
         Authored.Require(terrain.TryGetValue(definition.StartTerrain, out TerrainKind? start), path, "startTerrain",

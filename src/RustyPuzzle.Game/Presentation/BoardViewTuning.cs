@@ -20,9 +20,18 @@ internal sealed record SelectionLook(float[] Colour, float Inset, float Height);
 internal sealed record BoardViewTuning(float PitchDegrees, float Fill, float CellGap, PieceLook Piece,
     Color SelectionColour, float SelectionInset, float SelectionHeight, Color Background)
 {
-    internal const string Path = "tuning/board-view.json";
+    /// <summary>The content domain and bundle, <c>content/tuning/</c>, and this tuning's file in it.</summary>
+    internal const string Domain = "tuning";
+    private const string File = "board-view.json";
+    private const string Path = $"{Domain}/{File}";
 
-    internal static BoardViewTuning Interpret(BoardViewDefinition definition)
+    internal static BoardViewTuning Load(AuthoredContent content)
+    {
+        using AuthoredDomain domain = content.Open(Domain);
+        return Interpret(domain.Read(File, ContentJson.Default.BoardViewDefinition));
+    }
+
+    private static BoardViewTuning Interpret(BoardViewDefinition definition)
     {
         Authored.Within(Path, "pitchDegrees", definition.PitchDegrees, 10, 90);
         Authored.Within(Path, "fill", definition.Fill, 0.1f, 1);

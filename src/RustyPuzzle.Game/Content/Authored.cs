@@ -4,20 +4,45 @@ using Rusty.Engine;
 
 namespace RustyPuzzle.Game.Content;
 
-/// <summary>Reads authored content files into their typed records; every error names the file.</summary>
-internal static class Authored
+/// <summary>
+/// Opens the authored content domains. Each directory under <c>content/</c> is one declared Engine bundle
+/// named after the directory; a domain owner opens its own bundle, reads its own files and closes it.
+/// </summary>
+/// <param name="open">Opens a bundle by domain ID: the product's declared build bundles, or packed
+/// containers of the same directories in tests.</param>
+internal sealed class AuthoredContent(Func<string, ProductContentBundle> open)
+{
+    internal AuthoredDomain Open(string domain) => new(domain, open(domain));
+}
+
+/// <summary>One open content domain. Reads parse strict typed records, and every error names the file.</summary>
+internal sealed class AuthoredDomain(string domain, ProductContentBundle bundle) : IDisposable
 {
     private const string JsonExtension = ".json";
 
-    internal static T Read<T>(ProductContent content, string path, JsonTypeInfo<T> type) where T : class =>
-        Parse(content.ReadFile(path), type);
+    /// <summary>The content-root path of a file in this domain, as errors name it.</summary>
+    internal string PathOf(string file) => $"{domain}/{file}";
 
-    /// <summary>Every JSON file directly in <paramref name="directory"/>, keyed by its file name without the extension.</summary>
-    internal static IReadOnlyDictionary<string, T> ReadDirectory<T>(ProductContent content, string directory, JsonTypeInfo<T> type)
-        where T : class
+    internal T Read<T>(string file, JsonTypeInfo<T> type) where T : class
+    {
+        ProductContentFile read;
+        try
+        {
+            read = bundle.ReadFile(file);
+        }
+        catch (FileNotFoundException error)
+        {
+            throw new InvalidOperationException($"content/{PathOf(file)}: the file is missing.", error);
+        }
+
+        return Parse(read, type);
+    }
+
+    /// <summary>Every JSON file directly in the domain, keyed by its file name without the extension.</summary>
+    internal IReadOnlyDictionary<string, T> ReadAll<T>(JsonTypeInfo<T> type) where T : class
     {
         Dictionary<string, T> definitions = new(StringComparer.Ordinal);
-        foreach (ProductContentFile file in content.ReadDirectory(directory))
+        foreach (ProductContentFile file in bundle.ReadDirectory())
         {
             if (file.Name.EndsWith(JsonExtension, StringComparison.Ordinal))
             {
@@ -25,11 +50,28 @@ internal static class Authored
             }
         }
 
-        Require(definitions.Count > 0, directory, "", "holds no definitions.");
+        Authored.Require(definitions.Count > 0, domain, "", "holds no definitions.");
         return definitions;
     }
 
-    /// <summary>Fails authored data that parses but contradicts itself or another definition.</summary>
+    public void Dispose() => bundle.Dispose();
+
+    private T Parse<T>(ProductContentFile file, JsonTypeInfo<T> type) where T : class
+    {
+        try
+        {
+            return JsonSerializer.Deserialize(file.Bytes.Span, type) ?? throw new JsonException("The file holds no value.");
+        }
+        catch (JsonException error)
+        {
+            throw new InvalidOperationException($"content/{PathOf(file.RelativePath)}: {error.Message}", error);
+        }
+    }
+}
+
+/// <summary>Checks for authored values that parse but contradict themselves or another definition.</summary>
+internal static class Authored
+{
     internal static void Require(bool condition, string path, string field, string problem)
     {
         if (!condition)
@@ -49,16 +91,4 @@ internal static class Authored
     internal static void Within(string path, string field, float value, float minimum, float maximum) =>
         Require(float.IsFinite(value) && value >= minimum && value <= maximum, path, field,
             $"must be between {minimum} and {maximum}; found {value}.");
-
-    private static T Parse<T>(ProductContentFile file, JsonTypeInfo<T> type) where T : class
-    {
-        try
-        {
-            return JsonSerializer.Deserialize(file.Bytes.Span, type) ?? throw new JsonException("The file holds no value.");
-        }
-        catch (JsonException error)
-        {
-            throw new InvalidOperationException($"content/{file.RelativePath}: {error.Message}", error);
-        }
-    }
 }

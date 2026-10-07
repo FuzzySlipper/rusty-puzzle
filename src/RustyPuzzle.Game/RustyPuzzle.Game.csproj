@@ -13,8 +13,6 @@
     <RustyEngineProductTitle>Rusty Puzzle</RustyEngineProductTitle>
     <RustyEngineProductUiRoot>$(MSBuildProjectDirectory)/../ui</RustyEngineProductUiRoot>
     <RustyEngineProductUiEntry>main.js</RustyEngineProductUiEntry>
-    <!-- Loose content: the host admits it as the create-time ProductContent snapshot, and an edit
-         under `rusty dev` restages and replaces the runtime, which reloads every room. -->
     <RustyEngineProductContentRoot>$(MSBuildProjectDirectory)/../../content</RustyEngineProductContentRoot>
     <RustyEngineProductUiProjectionStream>rusty-puzzle</RustyEngineProductUiProjectionStream>
     <RustyEngineProductUiProjectionContract>rusty.puzzle.board</RustyEngineProductUiProjectionContract>
@@ -31,5 +29,13 @@
     <!-- puzzle.command carries the DOM's puzzle.command.v1 payloads ({action, ...}; see Interface/PuzzleCommand.cs). -->
     <RustyEngineProductInputIntent Include="puzzle.command" Value="payload:puzzle.command.v1" />
     <InternalsVisibleTo Include="RustyPuzzle.Smoke" />
+  </ItemGroup>
+
+  <!-- Every content domain directory (content/rooms, content/party, ...) is its own Engine bundle named
+       after the directory, so a new domain is a new directory. Each domain owner opens its own bundle.
+       Under `rusty dev` a bundle edit restages without replacing the runtime; Restart reloads it. -->
+  <ItemGroup>
+    <_PuzzleContentDomain Include="$([System.IO.Directory]::GetDirectories('$(RustyEngineProductContentRoot)'))" />
+    <RustyEngineContentBundle Include="@(_PuzzleContentDomain->'%(Filename)%(Extension)')" />
   </ItemGroup>
 </Project>

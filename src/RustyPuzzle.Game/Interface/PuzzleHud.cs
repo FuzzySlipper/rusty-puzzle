@@ -19,24 +19,23 @@ internal sealed class PuzzleHud : IDisposable
     private const string Contract = "rusty.puzzle.board";
 
     private readonly IUiService _ui;
-    private readonly InterfaceText _text;
     private readonly UiStream _stream;
     private ulong _sequence;
     private string? _published;
 
-    internal PuzzleHud(IUiService ui, InterfaceText text)
+    internal PuzzleHud(IUiService ui)
     {
         _ui = ui;
-        _text = text;
         _stream = ui.OpenStream(new UiStreamRequest(Stream, Contract));
     }
 
     /// <summary>The last projection published, for observation.</summary>
     internal JsonObject? Current { get; private set; }
 
-    internal void Publish(RoomState room)
+    /// <summary>Publishes the room in the authored words, unless the projection is unchanged.</summary>
+    internal void Publish(RoomState room, HudText text)
     {
-        JsonObject projection = Build(room);
+        JsonObject projection = Build(room, text);
         string json = projection.ToJsonString();
         if (json == _published)
         {
@@ -50,7 +49,7 @@ internal sealed class PuzzleHud : IDisposable
 
     public void Dispose() => _stream.Dispose();
 
-    private JsonObject Build(RoomState room)
+    private static JsonObject Build(RoomState room, HudText text)
     {
         PartyMember? selected = room.SelectedMember;
         JsonArray party = [];
@@ -60,41 +59,41 @@ internal sealed class PuzzleHud : IDisposable
             {
                 ["id"] = placed.Member.Id,
                 ["name"] = placed.Member.Name,
-                ["place"] = Template.Fill(_text.MemberPlace, Member(placed.Member), Column(placed.Cell), Row(placed.Cell)),
+                ["place"] = Template.Fill(text.MemberPlace, Member(placed.Member), Column(placed.Cell), Row(placed.Cell)),
                 ["selected"] = placed.Member == selected,
-                ["label"] = Template.Fill(_text.SelectMember, Member(placed.Member)),
+                ["label"] = Template.Fill(text.SelectMember, Member(placed.Member)),
                 ["command"] = Command(PuzzleCommand.Select(placed.Cell.Column, placed.Cell.Row)),
             });
         }
 
         return new JsonObject
         {
-            ["title"] = _text.Title,
+            ["title"] = text.Title,
             ["labels"] = new JsonObject
             {
-                ["room"] = _text.RoomLabel,
-                ["selected"] = _text.SelectedLabel,
-                ["party"] = _text.PartyHeading,
+                ["room"] = text.RoomLabel,
+                ["selected"] = text.SelectedLabel,
+                ["party"] = text.PartyHeading,
             },
             ["room"] = room.Room.Name,
-            ["selected"] = selected?.Name ?? _text.NobodySelected,
-            ["status"] = Status(room, selected),
+            ["selected"] = selected?.Name ?? text.NobodySelected,
+            ["status"] = Status(room, selected, text),
             ["party"] = party,
             ["intent"] = new JsonObject { ["id"] = PuzzleCommand.Intent, ["contract"] = PuzzleCommand.Contract },
         };
     }
 
-    private string Status(RoomState room, PartyMember? member)
+    private static string Status(RoomState room, PartyMember? member, HudText text)
     {
         if (room.Selected is not Cell cell)
         {
-            return _text.NothingSelected;
+            return text.NothingSelected;
         }
 
         (string, string) terrain = ("terrain", room.Room.Grid.TerrainAt(cell).Name);
         return member is null
-            ? Template.Fill(_text.CellSelected, terrain, Column(cell), Row(cell))
-            : Template.Fill(_text.MemberSelected, Member(member), terrain, Column(cell), Row(cell));
+            ? Template.Fill(text.CellSelected, terrain, Column(cell), Row(cell))
+            : Template.Fill(text.MemberSelected, Member(member), terrain, Column(cell), Row(cell));
     }
 
     private static JsonNode Command(PuzzleCommand command) =>

@@ -63,7 +63,7 @@ internal sealed class PuzzleDebugCommands(RustyPuzzleProduct product) : IDebugCo
             members.Add(new JsonObject { ["id"] = placed.Member.Id, ["column"] = placed.Cell.Column, ["row"] = placed.Cell.Row });
         }
 
-        CameraDescriptor camera = product.Camera.Descriptor;
+        CameraDescriptor camera = product.View.Camera.Descriptor;
         return new JsonObject
         {
             ["room"] = room.Room.Id,
@@ -77,7 +77,7 @@ internal sealed class PuzzleDebugCommands(RustyPuzzleProduct product) : IDebugCo
                 : null,
             ["camera"] = new JsonObject
             {
-                ["aspect"] = product.Camera.Aspect,
+                ["aspect"] = product.View.Camera.Aspect,
                 ["pitch"] = camera.Pose.PitchDegrees,
                 ["verticalSize"] = camera.Projection.VerticalSize,
             },

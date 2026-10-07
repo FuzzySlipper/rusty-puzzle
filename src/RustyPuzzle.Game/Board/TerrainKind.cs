@@ -16,11 +16,26 @@ internal sealed record TerrainLook(float[] Colour, float Height);
 /// <summary>A terrain kind as rooms and the board view use it.</summary>
 internal sealed record TerrainKind(string Id, string Name, char Symbol, bool Passable, bool Exit, Color Colour, float Height)
 {
+    /// <summary>The content domain and bundle: <c>content/terrain/</c>.</summary>
+    internal const string Domain = "terrain";
     private const float MaximumHeight = 4;
 
-    internal static TerrainKind Interpret(string id, TerrainDefinition definition)
+    /// <summary>Every authored terrain kind by ID; no two kinds share a symbol.</summary>
+    internal static IReadOnlyDictionary<string, TerrainKind> Load(AuthoredContent content)
     {
-        string path = $"terrain/{id}.json";
+        using AuthoredDomain domain = content.Open(Domain);
+        Dictionary<string, TerrainKind> kinds = domain.ReadAll(ContentJson.Default.TerrainDefinition)
+            .ToDictionary(pair => pair.Key, pair => Interpret(domain.PathOf($"{pair.Key}.json"), pair.Key, pair.Value), StringComparer.Ordinal);
+        foreach (IGrouping<char, TerrainKind> shared in kinds.Values.GroupBy(kind => kind.Symbol).Where(group => group.Count() > 1))
+        {
+            Authored.Require(false, Domain, "symbol", $"'{shared.Key}' marks more than one kind: {string.Join(", ", shared.Select(kind => kind.Id))}.");
+        }
+
+        return kinds;
+    }
+
+    private static TerrainKind Interpret(string path, string id, TerrainDefinition definition)
+    {
         Authored.Require(definition.Symbol.Length == 1 && !char.IsWhiteSpace(definition.Symbol[0]), path, "symbol",
             "must be one visible character.");
         Authored.Within(path, "look.height", definition.Look.Height, 0.01f, MaximumHeight);

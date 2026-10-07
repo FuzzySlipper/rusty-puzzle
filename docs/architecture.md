@@ -15,27 +15,28 @@ Authored content (content/)
 
 | Path or service | Responsibility |
 | --- | --- |
-| `src/RustyPuzzle.Game/RustyPuzzleProduct.cs` | Explicit composition and lifecycle: loads content, plays the first room of the authored order, routes admitted pointer presses and interface commands, publishes scene, camera and projection, registers debug modules |
-| `src/RustyPuzzle.Game/Content/` | `Authored`: strict source-generated JSON reads from the admitted `ProductContent` snapshot, errors naming the file and field. `PuzzleContent`: loads and validates each domain from its own directory |
-| `src/RustyPuzzle.Game/Board/` | `Cell`, terrain kinds (symbol, passable, exit, look) and `BoardGrid`, the room's terrain per cell |
-| `src/RustyPuzzle.Game/Party/` | Party member definitions (name, look) |
-| `src/RustyPuzzle.Game/Rooms/` | Authored room format and room order, interpretation of ASCII rows against the terrain and party vocabularies, and `RoomState`: the live placements and selection of the room being played, with a revision for republishing |
-| `src/RustyPuzzle.Game/Presentation/` | Board view tuning; `BoardLayout`, the one source of block geometry that drawing and picking share; `BoardCamera`, the orthographic camera fitted to the room from the surface aspect, and pointer picking through `CameraQueries.Ray`; `BoardScene`, the primitive appearances and published snapshot |
-| `src/RustyPuzzle.Game/Interface/` | Interface text templates; `PuzzleCommand`, the one `{action, ...}` payload vocabulary; `PuzzleHud`, the `UiValues.FromJson` projection; `PuzzleDebugCommands` and the `PlaytestDebugModule` adapter |
-| `src/RustyPuzzle.Game/RustyPuzzle.Game.csproj` | Product entry, content/UI roots, the `puzzle.command` payload intent, projection identity, `demand` lifecycle and unlocked cursor |
+| `src/RustyPuzzle.Game/RustyPuzzleProduct.cs` | Explicit composition and lifecycle: loads content, plays the first room of the authored order, routes admitted pointer presses and interface commands, publishes the board view and projection, reloads content on restart, registers debug modules |
+| `src/RustyPuzzle.Game/Content/` | `AuthoredContent`/`AuthoredDomain`: opening one domain's content bundle and strict source-generated JSON reads that name the file and field. `ContentJson`: the authored record types. `PuzzleContent`: one consistent load composed from each domain owner's `Load` |
+| `src/RustyPuzzle.Game/Board/` | `Cell`; terrain kinds (symbol, passable, exit, look) and their loader; `BoardGrid`, the room's terrain per cell |
+| `src/RustyPuzzle.Game/Party/` | Party member definitions (name, look) and their loader |
+| `src/RustyPuzzle.Game/Rooms/` | Authored room format and room order and their loader, interpretation of ASCII rows against the terrain and party vocabularies, and `RoomState`: the live placements and selection of the room being played, with a revision for republishing |
+| `src/RustyPuzzle.Game/Presentation/` | Board view tuning and its loader; `BoardView`, the presentation built from one tuning load: `BoardLayout`, the one source of block geometry that drawing and picking share; `BoardCamera`, the orthographic camera fitted to the room from the surface aspect, and pointer picking through `CameraQueries.Ray`; `BoardScene`, the primitive appearances and published snapshot |
+| `src/RustyPuzzle.Game/Interface/` | `HudText` (the HUD screen's words) and `Template`; `PuzzleCommand`, the one `{action, ...}` payload vocabulary; `PuzzleHud`, the `UiValues.FromJson` projection on one UI stream; `PuzzleDebugCommands` and the `PlaytestDebugModule` adapter |
+| `src/RustyPuzzle.Game/RustyPuzzle.Game.csproj` | Product entry, content/UI roots, one content bundle per content directory, the `puzzle.command` payload intent, projection identity, `demand` lifecycle and unlocked cursor |
 | `src/ui/main.js` | DOM HUD: room, selection, status text and party buttons from the projection; sends the projected commands; UI cleanup |
 | `content/` | Product-authored data, one directory per domain ([content](content.md)) |
-| `tests/RustyPuzzle.Smoke/` | Callback smoke test over `EngineTestHost` with the content linked in |
+| `tests/RustyPuzzle.Smoke/` | Callback smoke test over `EngineTestHost`: a harness, the content packed into Engine containers, and one check file per domain |
 | Engine SDK/runtime | Generated interop, admitted updates/input, retained UI transport, host, renderer, and browser shell |
 
 ## Lifecycle and data flow
 
 The installed runtime loads the product assembly through its SDK-generated bind
 entry point. The bind checks the SDK/runtime ABI identity and constructs the
-product with `ProductCreateContext`. Construction reads every content domain
-from the admitted loose-content snapshot and fails, naming the file, on any
-invalid authored value; it then creates the camera, scene appearances and UI
-stream, disposing what it made if any step fails.
+product with `ProductCreateContext`. Construction opens each content domain's
+declared bundle through `ProductContent.OpenBundle`, reads it through its
+domain owner and fails, naming the file, on any invalid authored value; it
+then opens the UI stream and builds the board view (camera, layout, scene),
+disposing what it made if any step fails.
 
 The product runs in `demand` lifecycle mode: the board is turn-based and has
 nothing to animate, so the Engine admits an `Update` when input arrives
@@ -55,9 +56,13 @@ changed. The projection carries every word the DOM shows (composed from
 content templates), each party button's ready-made command, and the payload
 intent identity, so the DOM keeps no vocabulary or state of its own.
 
-Engine owns pause/resume/restart/shutdown admission. Restart returns the room
-to its authored start. Disposal publishes an empty snapshot before releasing
-appearances, then releases the camera and UI stream.
+Engine owns pause/resume/restart/shutdown admission. Restart reloads every
+content domain as one set, so bundle edits restaged by `rusty dev` show
+without replacing the runtime; it then replaces the board view and returns to
+the first room's authored start. Content that fails to load leaves the room,
+view and content in place and faults with the file named. The UI stream lives
+for the product's lifetime. Disposal publishes an empty snapshot before
+releasing appearances, then releases the camera and UI stream.
 
 ## Build and host
 

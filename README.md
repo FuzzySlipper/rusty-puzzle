@@ -70,8 +70,9 @@ rusty build --aot
 ```
 
 The smoke test drives the product callbacks over the pinned Engine's real
-services, without a browser: content loading, the board, pointer picking,
-interface commands, restart and content errors.
+services, without a browser: content loading and reload, the board, pointer
+picking, interface commands and debug commands. Each domain's checks live in
+their own file beside the shared harness.
 
 ```bash
 dotnet run --project tests/RustyPuzzle.Smoke

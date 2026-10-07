@@ -1,7 +1,6 @@
 using System.Numerics;
 using Rusty.Engine;
 using Rusty.Engine.Debugging;
-using RustyPuzzle.Game.Board;
 using RustyPuzzle.Game.Content;
 using RustyPuzzle.Game.Interface;
 using RustyPuzzle.Game.Presentation;
@@ -10,31 +9,35 @@ using RustyPuzzle.Game.Rooms;
 namespace RustyPuzzle.Game;
 
 /// <summary>
-/// The Engine product: loads the authored content, plays the first room of the authored order, turns
-/// admitted pointer presses and interface commands into board selections, and publishes the board scene
-/// and the interface projection.
+/// The Engine product: loads the authored content domains, plays the first room of the authored order, turns
+/// admitted pointer presses and interface commands into board selections, and publishes the board view and
+/// the interface projection. Restart reloads the content, so edited content bundles show without a rebuild.
 /// </summary>
 public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSource
 {
     private readonly IEngineContext _engine;
-    private readonly PuzzleContent _content;
-    private readonly BoardLayout _layout;
-    private readonly BoardCamera _camera;
-    private readonly BoardScene _scene;
+    private readonly AuthoredContent _authored;
     private readonly PuzzleHud _hud;
+    private PuzzleContent _content;
+    private BoardView _view;
     private bool _disposed;
 
     public RustyPuzzleProduct(ProductCreateContext context)
+        : this(context, new AuthoredContent(context.Content.OpenBundle))
+    {
+    }
+
+    /// <param name="authored">Where the content domains are opened from.</param>
+    internal RustyPuzzleProduct(ProductCreateContext context, AuthoredContent authored)
     {
         ArgumentNullException.ThrowIfNull(context);
         _engine = context.Engine;
+        _authored = authored;
         try
         {
-            _content = PuzzleContent.Load(context.Content);
-            _layout = new BoardLayout(_content.View);
-            _camera = new BoardCamera(_engine, _content.View);
-            _scene = new BoardScene(_engine.Graphics, _layout, _content.View);
-            _hud = new PuzzleHud(_engine.Ui, _content.Text);
+            _content = PuzzleContent.Load(authored);
+            _hud = new PuzzleHud(_engine.Ui);
+            _view = new BoardView(_engine, _content.View);
             Room = new RoomState(_content.Rooms[0]);
         }
         catch
@@ -44,11 +47,9 @@ public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSour
         }
     }
 
-    internal RoomState Room { get; }
+    internal RoomState Room { get; private set; }
 
-    internal BoardLayout Layout => _layout;
-
-    internal BoardCamera Camera => _camera;
+    internal BoardView View => _view;
 
     internal PuzzleHud Hud => _hud;
 
@@ -76,9 +77,19 @@ public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSour
     {
     }
 
+    /// <summary>
+    /// Reloads every content domain and returns to the first room's authored start. Content that fails to
+    /// load leaves the current room, view and content in place and faults with the file named.
+    /// </summary>
     public void Restart()
     {
-        Room.Reset();
+        PuzzleContent content = PuzzleContent.Load(_authored);
+        BoardView view = new(_engine, content.View);
+        // The old view clears the published scene as it goes; the publish below draws the new one.
+        _view.Dispose();
+        _view = view;
+        _content = content;
+        Room = new RoomState(content.Rooms[0]);
         Publish();
     }
 
@@ -94,8 +105,7 @@ public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSour
         }
 
         _disposed = true;
-        _scene?.Dispose();
-        _camera?.Dispose();
+        _view?.Dispose();
         _hud?.Dispose();
     }
 
@@ -107,21 +117,15 @@ public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSour
     }
 
     /// <summary>Selects the cell drawn at a pointer position (normalized, bottom-left origin); off the board clears.</summary>
-    internal void PickAt(Vector2 point)
-    {
-        _camera.Frame(Room, _layout);
-        Cell? picked = _camera.Pick(Room, _layout, point);
-        Room.Select(picked);
-    }
+    internal void PickAt(Vector2 point) => Room.Select(_view.Pick(Room, point));
 
     internal bool Apply(PuzzleCommand command) => command.ApplyTo(Room);
 
-    /// <summary>Shows the current room state in the scene, the camera and the interface.</summary>
+    /// <summary>Shows the current room state in the board view and the interface.</summary>
     internal void Publish()
     {
-        _camera.Frame(Room, _layout);
-        _scene.Publish(Room);
-        _hud.Publish(Room);
+        _view.Publish(Room);
+        _hud.Publish(Room, _content.Hud);
     }
 
     private void Apply(ReadOnlySpan<ProductInputEvent> input)
