@@ -1,13 +1,13 @@
 using Rusty.Engine;
-using RustyTemplate.Game.Counter;
+using RustyPuzzle.Game.Counter;
 
-namespace RustyTemplate.Game;
+namespace RustyPuzzle.Game;
 
-public sealed class RustyTemplateProduct : IEngineProduct
+public sealed class RustyPuzzleProduct : IEngineProduct
 {
     private const string IncrementIntent = "increment";
-    private const string UiStreamId = "rusty-template";
-    private const string UiContract = "rusty.template.counter";
+    private const string UiStreamId = "rusty-puzzle";
+    private const string UiContract = "rusty.puzzle.counter";
     private const float DigitalIntentActiveThreshold = 0.5f;
     private const uint RootNodeIndex = 0;
     private const uint ValueNodeIndex = 1;
@@ -22,7 +22,7 @@ public sealed class RustyTemplateProduct : IEngineProduct
     private bool _paused;
     private bool _shutdown;
 
-    public RustyTemplateProduct(ProductCreateContext context)
+    public RustyPuzzleProduct(ProductCreateContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
         _engine = context.Engine;

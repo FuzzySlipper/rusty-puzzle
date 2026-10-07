@@ -8,14 +8,14 @@
     <AnalysisLevel>latest</AnalysisLevel>
     <Deterministic>true</Deterministic>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-    <RustyEngineProductEntryType>RustyTemplate.Game.RustyTemplateProduct</RustyEngineProductEntryType>
-    <RustyEngineProductId>rusty-template</RustyEngineProductId>
-    <RustyEngineProductTitle>Rusty Template</RustyEngineProductTitle>
+    <RustyEngineProductEntryType>RustyPuzzle.Game.RustyPuzzleProduct</RustyEngineProductEntryType>
+    <RustyEngineProductId>rusty-puzzle</RustyEngineProductId>
+    <RustyEngineProductTitle>Rusty Puzzle</RustyEngineProductTitle>
     <RustyEngineProductUiRoot>$(MSBuildProjectDirectory)/../ui</RustyEngineProductUiRoot>
     <RustyEngineProductUiEntry>main.js</RustyEngineProductUiEntry>
     <RustyEngineProductContentRoot>$(MSBuildProjectDirectory)/../../content</RustyEngineProductContentRoot>
-    <RustyEngineProductUiProjectionStream>rusty-template</RustyEngineProductUiProjectionStream>
-    <RustyEngineProductUiProjectionContract>rusty.template.counter</RustyEngineProductUiProjectionContract>
+    <RustyEngineProductUiProjectionStream>rusty-puzzle</RustyEngineProductUiProjectionStream>
+    <RustyEngineProductUiProjectionContract>rusty.puzzle.counter</RustyEngineProductUiProjectionContract>
     <RustyEngineProductLifecycleMode>realtime</RustyEngineProductLifecycleMode>
     <RustyEngineProductFixedStepHz>60</RustyEngineProductFixedStepHz>
     <RustyEngineProductFixedStepMaxCatchUpSteps>4</RustyEngineProductFixedStepMaxCatchUpSteps>

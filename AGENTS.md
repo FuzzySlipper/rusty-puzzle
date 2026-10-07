@@ -1,7 +1,13 @@
-# Rusty Template agent guidance
+# Rusty Puzzle agent guidance
 
-Rusty Template is a minimal C# counter product and starting point for downstream
-Rusty Engine projects. Keep it small enough to understand and customize.
+Rusty Puzzle is a turn-based, grid-based fantasy party puzzle game: each party
+member obeys one distinctive movement law, and rooms are solved by choosing,
+sequencing and combining those rules on a patient board with no twitch
+pressure. Read [docs/game-design.md](docs/game-design.md) for product direction
+and the first-prototype scope, and [docs/reuse.md](docs/reuse.md) before
+borrowing sibling code. Den project `rusty-puzzle` owns tasks and progress.
+Keep the product small and explicit; proposed game systems are not implemented
+owners until the code and the architecture owner map say so.
 
 > The product decides. The Engine guarantees.
 
@@ -22,9 +28,12 @@ and pause only decisions that need unavailable authority.
 
 ## Ownership and source
 
-- `src/RustyTemplate.Game/` owns counter state, application policy, semantic
-  input interpretation, and UI facts. Organize additions by product domain;
-  keep the product entry focused on explicit composition and lifecycle.
+- `src/RustyPuzzle.Game/` owns board and party state, puzzle rules, room
+  authoring interpretation, semantic input interpretation, and UI facts.
+  Organize additions by product domain (board, party and movement laws, rooms,
+  interface); keep the product entry focused on explicit composition and
+  lifecycle. The board is deterministic: legal moves, consequences, win checks
+  and undo are product decisions over admitted Engine input, never timers.
 - `Rusty.Engine` owns named Engine mechanisms: lifecycle/update admission,
   input delivery, rendering/resources, spatial queries, content delivery,
   persistence primitives, and host integration. Search the safe SDK and
@@ -32,9 +41,11 @@ and pause only decisions that need unavailable authority.
 - `src/ui/` is a DOM companion. It observes Engine projections and submits
   semantic intents. Gameplay state, game rendering, canvas, transport, and
   scheduling stay with their C#/Engine owners.
-- `content/` holds product-authored data. Interpret it in typed C# through
-  Engine content services. Keep authored definitions, live state, and transient
-  presentation distinct.
+- `content/` holds product-authored data: handcrafted rooms, party member
+  definitions and their movement laws, tuning and interface text. Interpret it
+  in typed C# through Engine content services. Keep authored definitions, live
+  state, and transient presentation distinct. Gameplay prose and tuning values
+  belong in content, not in C# or JS literals.
 - The SDK generates the bind entry point and interop under ignored `obj/` output.
   Product code stays safe C#: no handwritten ABI/PInvoke, exports, raw native
   access, downstream Rust, or checked-in composition projects.
@@ -87,6 +98,18 @@ that is authorized. Distinguish a missing mechanism or binding from a helper
 or documentation gap. Stop that dependent slice; continue independent work.
 Do not conceal the gap with a local substitute, fake success, or proof-only path.
 
+## Durable documentation
+
+Repository Markdown is for settled, permanently useful information: product
+intent, implemented ownership, contracts, authoring recipes, repeatable commands
+and incorporated code provenance. Den owns plans, task status, handoffs,
+reviews, investigations, playtest evidence and dated measurements. Do not add
+a session diary, roadmap, "current state" or "remaining work" section, Den task
+IDs, or TODO comments that carry a plan to repository docs; point from Den to
+the repo, not back. Design may state intended direction; whether a part exists
+is visible from the code and the architecture owner map. When a change settles
+a durable rule, update its owning document in the same work.
+
 ## Review and evidence
 
 Use [docs/agent-review/README.md](docs/agent-review/README.md). Every change gets
@@ -99,7 +122,7 @@ original task. Review is not an extra user-approval gate.
 `rusty build` builds the default project `Directory.Build.props` names
 and stages the ordinary CoreCLR product; `--aot` additionally publishes NativeAOT. Use focused
 semantic or interaction evidence only when it answers the changed behavior;
-do not add broad test gates to this small template. Distinguish build/staging,
+do not add broad test gates to this small product. Distinguish build/staging,
 host launch, and visible interaction claims. Repeat passed checks only after
 material changes or an unresolved failure.
 

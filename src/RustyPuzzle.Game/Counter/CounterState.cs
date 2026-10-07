@@ -1,4 +1,4 @@
-namespace RustyTemplate.Game.Counter;
+namespace RustyPuzzle.Game.Counter;
 
 public sealed class CounterState
 {

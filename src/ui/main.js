@@ -4,20 +4,20 @@
  */
 export function mountProductUi(root, context) {
   const panel = document.createElement('aside');
-  panel.setAttribute('aria-label', 'Rusty Template counter');
+  panel.setAttribute('aria-label', 'Rusty Puzzle counter');
 
   const title = document.createElement('h1');
-  title.textContent = 'Rusty Template';
+  title.textContent = 'Rusty Puzzle';
   panel.append(title);
 
   const increment = document.createElement('button');
   increment.type = 'button';
   increment.textContent = 'Increment';
-  increment.dataset.rustyTemplateIncrement = 'true';
+  increment.dataset.rustyPuzzleIncrement = 'true';
   panel.append(increment);
 
   const value = document.createElement('output');
-  value.id = 'rusty-template-counter';
+  value.id = 'rusty-puzzle-counter';
   value.textContent = '0';
   value.setAttribute('aria-live', 'polite');
   panel.append(value);

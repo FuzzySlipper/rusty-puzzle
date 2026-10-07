@@ -14,11 +14,11 @@ Counter state and policy (C#)
 
 | Path or service | Responsibility |
 | --- | --- |
-| `src/RustyTemplate.Game/Counter/CounterState.cs` | Counter value, increment saturation, and reset policy |
-| `src/RustyTemplate.Game/RustyTemplateProduct.cs` | Lifecycle callbacks, semantic input interpretation, and counter projection |
-| `src/RustyTemplate.Game/RustyTemplate.Game.csproj` | Explicit product entry, content/UI roots, intents, and host defaults |
+| `src/RustyPuzzle.Game/Counter/CounterState.cs` | Bootstrap counter value, increment saturation, and reset policy (replaced by the board, party and room owners as they land) |
+| `src/RustyPuzzle.Game/RustyPuzzleProduct.cs` | Lifecycle callbacks, semantic input interpretation, and counter projection |
+| `src/RustyPuzzle.Game/RustyPuzzle.Game.csproj` | Explicit product entry, content/UI roots, intents, and host defaults |
 | `src/ui/main.js` | DOM button/label, intent submission, projection subscription, and UI cleanup |
-| `content/` | Product-authored data |
+| `content/` | Product-authored data: rooms, party definitions and interface text as they are authored |
 | Engine SDK/runtime | Generated interop, admitted updates/input, retained UI transport, host, renderer, and browser shell |
 
 ## Lifecycle and data flow

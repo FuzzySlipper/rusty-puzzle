@@ -1,8 +1,17 @@
-# Rusty Template
+# Rusty Puzzle
 
-A minimal Rusty Engine product: C# owns a counter, a DOM button sends an
-`increment` intent, and Engine transports the counter projection to the UI.
-The packaged Engine owns the host, input, update loop, and browser shell.
+A turn-based, grid-based fantasy party puzzle game on Rusty Engine. Each party
+member obeys a distinctive movement law, and the player solves rooms by
+choosing, sequencing and combining those rules. Read the
+[game design](docs/game-design.md) for product direction and the
+[sibling reuse guidance](docs/reuse.md) before borrowing code from another
+Rusty product. Tasks and implementation progress live in Den project
+`rusty-puzzle`.
+
+The code is still the counter bootstrap: C# owns a counter, a DOM button sends
+an `increment` intent, and Engine transports the counter projection to the UI.
+The packaged Engine owns the host, input, update loop, and browser shell. The
+board, party and rooms replace the counter through the Den tasks.
 
 ## Setup
 
@@ -62,11 +71,14 @@ rusty build --aot
 
 | Path | Responsibility |
 | --- | --- |
-| `src/RustyTemplate.Game/` | Ordinary safe C# product, counter state, and product metadata |
+| `src/RustyPuzzle.Game/` | Ordinary safe C# product, counter bootstrap state, and product metadata |
 | `src/ui/main.js` | DOM presentation and semantic input |
 | `content/` | Product-authored content root |
 | `Directory.Build.props` | Matched Engine SDK/runtime pin and default product project |
 | `docs/architecture.md` | Current ownership and data flow |
+| `docs/game-design.md` | Product direction: concept, party movement grammar, prototype scope |
+| `docs/reuse.md` | One-time sibling donors, copying procedure and incorporated provenance |
+| `.den-serve.json` | Playtest host configuration for the Den playtest service |
 | `docs/ui.md` | DOM companion contract |
 | `docs/agent-review/` | Reusable review workflow and lane packets |
 
@@ -74,21 +86,6 @@ The SDK generates the product's bind entry point inside its ordinary build;
 there is no composition project. The Engine runtime supplies the host and
 browser shell. Product metadata, input intents, content/UI
 roots, and projection identity live in the ordinary `.csproj`.
-
-## Start a product from this template
-
-1. Rename the C# directory/project, namespace, and entry type together, and use
-   the new project path in `<RustyEngineProject>` in `Directory.Build.props`.
-2. Set the product ID/title and UI projection stream/contract in the project
-   file. Keep the C# stream/contract constants aligned. Define semantic intents
-   there and keep their C#/DOM callers aligned.
-3. Replace the counter domain and DOM UI with the product's behavior. Add
-   authored data under `content/` and load it through Engine services. Keep
-   documentation outside `src/ui/`; every file there is staged as a web asset.
-4. Customize `AGENTS.md` and the architecture owner map for the actual product.
-   Add a Den project or donor contract only if the new project uses one.
-5. Keep the generic review lanes, adding concrete owner pointers and relevant
-   task-specific questions as described in [the review guide](docs/agent-review/README.md).
 
 Read [AGENTS.md](AGENTS.md) before extending the product. Keep instructions
 about current behavior and ownership; exact dependency identities belong in
