@@ -40,7 +40,8 @@ rusty install
 rusty dev --port 8787
 ```
 
-Open the URL printed by the host. The first room of the authored order opens.
+Open the URL printed by the host. The first room of the authored order opens;
+the panel's picker reaches every room.
 Select a party member (on the board or in the panel), then click a highlighted
 cell to move it; point at a highlighted cell to preview the move. Undo and
 Reset are in the panel. The room is solved when the whole party stands on the
@@ -75,8 +76,10 @@ rusty build --aot
 
 The smoke test drives the product callbacks over the pinned Engine's real
 services, without a browser: content loading and reload, the board, pointer
-picking, interface commands and debug commands. Each domain's checks live in
-their own file beside the shared harness.
+picking, interface commands and debug commands, and a breadth-first solver
+that proves every shipped room solvable, holds it to its authored intent and
+prints its shortest solution. Each domain's checks live in their own file
+beside the shared harness.
 
 ```bash
 dotnet run --project tests/RustyPuzzle.Smoke

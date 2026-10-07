@@ -1,0 +1,12 @@
+{
+  "name": "Stepping Stone",
+  "brief": "The ranger can vault over a party member, but never lands on one. The fighter is in the way.",
+  "intent": "combination",
+  "rows": [
+    "#########",
+    "#R.F..EE#",
+    "#########"
+  ],
+  "party": {"R": "ranger", "F": "fighter"},
+  "startTerrain": "floor"
+}

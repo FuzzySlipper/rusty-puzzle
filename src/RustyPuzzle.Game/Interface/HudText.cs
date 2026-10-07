@@ -6,13 +6,15 @@ namespace RustyPuzzle.Game.Interface;
 
 /// <summary>
 /// The board HUD's words, <c>content/interface/hud.json</c>. Templates name their values in braces:
-/// <c>{member}</c>, <c>{terrain}</c>, <c>{column}</c>, <c>{row}</c>, <c>{count}</c>, and in <c>alsoMoves</c> the
+/// <c>{member}</c>, <c>{terrain}</c>, <c>{column}</c>, <c>{row}</c>, <c>{count}</c>, <c>{number}</c>, <c>{room}</c>, and in <c>alsoMoves</c> the
 /// <c>{move}</c> text so far. <see cref="Refusals"/> holds one sentence per <see cref="Refusal"/>, keyed by its
 /// kebab-case name. Each interface screen has its own file.
 /// </summary>
 internal sealed record HudText(
     string Title,
     string RoomLabel,
+    string RoomsLabel,
+    string RoomOption,
     string SelectedLabel,
     string LawLabel,
     string MoveCountLabel,

@@ -8,7 +8,7 @@ using RustyPuzzle.Game.Interface;
 using RustyPuzzle.Game.Presentation;
 
 /// <summary>
-/// One product under the Engine test host, driven through its ordinary callbacks: demand updates carrying
+/// One product under the Engine test host, driven through its ordinary callbacks: realtime updates carrying
 /// pointer presses or interface claims, and observation through the playtest module and the projection.
 /// </summary>
 sealed class Harness : IDisposable
@@ -35,8 +35,8 @@ sealed class Harness : IDisposable
             content.Authored(engine));
 
     internal void Advance(params ProductInputEvent[] input) =>
-        Product.Update(new ProductUpdate(new ProductUpdateFacts(ProductUpdateMode.Demand, ProductLifecycleState.Running,
-            1, 1, 0, _step++, 0, 1, 0, 0), input));
+        Product.Update(new ProductUpdate(new ProductUpdateFacts(ProductUpdateMode.Realtime, ProductLifecycleState.Running,
+            1, 1, 0, _step++, 60, 1, 0, 1d / 60), input));
 
     internal JsonObject Observe() => JsonNode.Parse(Playtest.Observe().Message)!.AsObject();
 

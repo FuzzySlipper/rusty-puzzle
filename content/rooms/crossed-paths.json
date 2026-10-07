@@ -1,0 +1,16 @@
+{
+  "name": "Crossed Paths",
+  "brief": "The mage trades with the ranger and the rogue in turn to bring all three home.",
+  "intent": "combination",
+  "rows": [
+    "########",
+    "#R....##",
+    "#..##..#",
+    "#GM....#",
+    "#...#.E#",
+    "#....EE#",
+    "########"
+  ],
+  "party": {"R": "ranger", "G": "rogue", "M": "mage"},
+  "startTerrain": "floor"
+}

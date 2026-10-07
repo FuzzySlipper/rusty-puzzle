@@ -4,6 +4,7 @@ using RustyPuzzle.Game.Board;
 using RustyPuzzle.Game.Movement;
 using RustyPuzzle.Game.Party;
 using RustyPuzzle.Game.Presentation;
+using RustyPuzzle.Game.Rooms;
 using RustyPuzzle.Game.Session;
 
 namespace RustyPuzzle.Game.Interface;
@@ -42,6 +43,18 @@ internal static class HudProjection
             });
         }
 
+        JsonArray rooms = [];
+        for (int index = 0; index < session.Rooms.Count; index++)
+        {
+            Room room = session.Rooms[index];
+            rooms.Add(new JsonObject
+            {
+                ["label"] = Template.Fill(text.RoomOption, ("number", (index + 1).ToString(CultureInfo.InvariantCulture)), ("room", room.Name)),
+                ["current"] = room == session.Room,
+                ["command"] = CommandPayload.ToJson(PuzzleCommand.ChooseRoom(room.Id, session.Revision)),
+            });
+        }
+
         JsonArray controls =
         [
             Control("undo", text.Undo, PuzzleCommand.Undo(session.Revision), session.CanUndo),
@@ -58,6 +71,7 @@ internal static class HudProjection
             ["labels"] = new JsonObject
             {
                 ["room"] = text.RoomLabel,
+                ["rooms"] = text.RoomsLabel,
                 ["selected"] = text.SelectedLabel,
                 ["law"] = text.LawLabel,
                 ["moveCount"] = text.MoveCountLabel,
@@ -65,6 +79,8 @@ internal static class HudProjection
                 ["moves"] = text.MovesHeading,
             },
             ["room"] = session.Room.Name,
+            ["brief"] = session.Room.Brief,
+            ["rooms"] = rooms,
             ["selected"] = selected?.Name ?? text.NobodySelected,
             ["law"] = selected?.Law.Rule,
             ["moveCount"] = session.MoveCount,

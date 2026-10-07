@@ -16,7 +16,7 @@ own ID. Colours are linear `[r, g, b]` with components from 0 to 1.
 | `terrain/<id>.json` | One terrain kind: `name` (the noun interface text uses), `symbol` (one character in room rows), `passable`, `exit`, `look.colour`, `look.height` (cells) | `Board/TerrainKind.cs` |
 | `laws/<id>.json` | One reusable movement law: `rule` (its one sentence) and `moves` (below) | `Movement/MovementLaw.cs` |
 | `party/<id>.json` | One party member: `name`, `law` (a law ID), `look.colour`, `look.mark` (one or two letters for lists) | `Party/PartyMember.cs` |
-| `rooms/<id>.json` | One room: `name`, `rows`, `party`, `startTerrain` (below) | `Rooms/Room.cs` |
+| `rooms/<id>.json` | One room: `name`, `brief`, `intent`, `rows`, `party`, `startTerrain` (below) | `Rooms/Room.cs` |
 | `campaign/rooms.json` | `order`: room IDs in play order; the first opens at start | `Rooms/Room.cs` (`RoomOrder`) |
 | `interface/<screen>.json` | One interface screen's words and templates; `hud.json` is the board HUD, including `refusals`, one sentence per session refusal keyed by its kebab-case name (all required, no extras) | `Interface/HudText.cs` |
 | `tuning/board-view.json` | Camera pitch and fill, cell gap, piece size, selection and destination markers, move preview tokens, background | `Presentation/BoardViewTuning.cs` |
@@ -51,17 +51,35 @@ terrain symbol, and each marker appears exactly once. The room is solved when
 the whole party stands on exit cells at once, so a room needs at least as many
 exit cells as party members.
 
+`brief` is the room's one new idea in a sentence or two, shown in the HUD.
+`intent` says what the room asks of the party: `combination` (no solution
+exists without a swap or a vault over a member) or `independent` (a control
+room: every member can do its own job alone).
+
 ```json
 {
   "name": "First Steps",
-  "rows": ["#####", "#1.E#", "#####"],
-  "party": { "1": "fighter" },
+  "brief": "Select the fighter, then click a highlighted square to step.",
+  "intent": "independent",
+  "rows": ["#####", "#F.E#", "#####"],
+  "party": { "F": "fighter" },
   "startTerrain": "floor"
 }
 ```
 
-Add a room by adding its file and naming it in `campaign/rooms.json`. A new
-terrain kind is a new file in `terrain/` with an unused symbol.
+`campaign/rooms.json` is the introduction order; the room picker lists rooms
+in it, and Next room follows it. Add a room by adding its file, naming it in
+the order where its idea belongs, and running the smoke test: its solver check
+solves every room in the order with the product's own laws, prints each
+room's shortest solution with and without help, and fails a room that is
+unsolvable, whose `intent` does not hold, or whose search passes a million
+boards. A new terrain kind is a new file in `terrain/` with an unused symbol.
+
+Two parity facts shape rooms. The rogue's diagonal steps never change the
+colour of its square, and the ranger's two-square strides never change the
+parity of its column or row; only a mage swap moves them onto squares of
+another class, and only when the mage stands on one. Keep the exits each
+member must reach within its class, or give it a mage.
 
 ## Movement laws
 

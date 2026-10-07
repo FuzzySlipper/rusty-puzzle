@@ -1,0 +1,15 @@
+{
+  "name": "Crowded Exit",
+  "brief": "Every member, every law, and an exit with no room to spare.",
+  "intent": "combination",
+  "rows": [
+    "#########",
+    "#F.R.#..#",
+    "#.##...##",
+    "#G..#.EE#",
+    "#M....EE#",
+    "#########"
+  ],
+  "party": {"F": "fighter", "R": "ranger", "G": "rogue", "M": "mage"},
+  "startTerrain": "floor"
+}

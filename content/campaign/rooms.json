@@ -1,1 +1,19 @@
-{ "order": ["first-steps"] }
+{
+  "order": [
+    "first-steps",
+    "long-strides",
+    "slantwise",
+    "stepping-stone",
+    "separate-ways",
+    "trading-places",
+    "odd-one-out",
+    "round-the-bend",
+    "two-chambers",
+    "wrong-foot",
+    "keeping-company",
+    "crossed-paths",
+    "side-by-side",
+    "gathering",
+    "crowded-exit"
+  ]
+}

@@ -54,12 +54,21 @@ public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSour
 
     internal BoardView View => _view;
 
+    internal PuzzleContent Content => _content;
+
     internal PuzzleHud Hud => _hud;
 
     public void Start() => Publish();
 
     public ProductUpdateResult Update(ProductUpdate update)
     {
+        if (update.Input.IsEmpty)
+        {
+            // Nothing was asked; the board view still follows layout changes.
+            _view.Publish(Picture());
+            return ProductUpdateResult.None;
+        }
+
         Apply(update.Input);
         Publish();
         return ProductUpdateResult.None;

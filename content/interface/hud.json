@@ -1,6 +1,8 @@
 {
   "title": "Rusty Puzzle",
   "roomLabel": "Room",
+  "roomsLabel": "Choose a room",
+  "roomOption": "{number}. {room}",
   "selectedLabel": "Selected",
   "lawLabel": "Moves by",
   "moveCountLabel": "Moves made",

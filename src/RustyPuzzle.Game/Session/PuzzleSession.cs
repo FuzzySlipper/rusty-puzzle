@@ -48,6 +48,9 @@ internal sealed class PuzzleSession
 
     internal bool CanUndo => _history.Count > 1;
 
+    /// <summary>Every room of the authored order, in order.</summary>
+    internal IReadOnlyList<Room> Rooms => _rooms;
+
     /// <summary>The room after this one in the authored order, if any.</summary>
     internal Room? NextRoom => _rooms.SkipWhile(room => room != Room).Skip(1).FirstOrDefault();
 

@@ -34,6 +34,19 @@ export function mountProductUi(root, context) {
   const selectedFact = fact();
   const lawFact = fact();
 
+  const brief = element('p');
+  brief.style.cssText = 'margin:0 0 8px;font-style:italic;opacity:0.9';
+
+  // The room picker: a native select whose options carry the projected room commands.
+  const picker = element('label');
+  picker.style.cssText = 'display:grid;gap:2px;margin:0 0 8px';
+  const pickerLabel = element('span');
+  const rooms = element('select');
+  rooms.style.cssText = 'font:inherit;padding:2px 4px;background:#22222a;color:inherit;border:1px solid #555;border-radius:4px';
+  picker.append(pickerLabel, rooms);
+  let roomCommands = [];
+  rooms.addEventListener('change', () => send(roomCommands[rooms.selectedIndex]));
+
   const controls = element('div');
   controls.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px';
 
@@ -45,7 +58,7 @@ export function mountProductUi(root, context) {
   const [partyHeading, party] = section('rusty-puzzle-party');
   const [movesHeading, moves] = section('rusty-puzzle-moves');
 
-  panel.append(title, facts, controls, status, partyHeading, party, movesHeading, moves);
+  panel.append(title, picker, facts, brief, controls, status, partyHeading, party, movesHeading, moves);
   root.append(boardView, panel);
   let anchored = null;
   let releaseAnchor = () => {};
@@ -64,7 +77,11 @@ export function mountProductUi(root, context) {
       releaseAnchor = context?.viewport?.anchor?.(anchored, boardView) ?? (() => {});
     }
     title.textContent = value.title;
+    pickerLabel.textContent = value.labels.rooms;
+    roomCommands = value.rooms.map((room) => room.command);
+    rooms.replaceChildren(...value.rooms.map((room) => element('option', { textContent: room.label, selected: room.current })));
     setFact(roomFact, value.labels.room, value.room);
+    brief.textContent = value.brief;
     setFact(moveCountFact, value.labels.moveCount, String(value.moveCount));
     setFact(selectedFact, value.labels.selected, value.selected);
     // The law row shows only while a member is selected.

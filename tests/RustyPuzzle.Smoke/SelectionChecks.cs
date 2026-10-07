@@ -8,7 +8,7 @@ static class SelectionChecks
 {
     internal static void Run(IEngineContext engine)
     {
-        using PackedContent shipped = PackedContent.Shipped();
+        using PackedContent shipped = PackedContent.Ordered("gathering");
         using Harness puzzle = new(engine, shipped);
         BoardGrid grid = puzzle.Product.Session.Board.Grid;
         var layout = puzzle.Product.View.Layout;

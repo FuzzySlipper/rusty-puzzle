@@ -1,0 +1,14 @@
+{
+  "name": "Long Strides",
+  "brief": "The ranger always moves exactly two squares. Squares one away are out of reach.",
+  "intent": "independent",
+  "rows": [
+    "#########",
+    "#R......#",
+    "#.###.#.#",
+    "#...#..E#",
+    "#########"
+  ],
+  "party": {"R": "ranger"},
+  "startTerrain": "floor"
+}

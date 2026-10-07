@@ -1,0 +1,16 @@
+{
+  "name": "Side by Side",
+  "brief": "Three members who never need to help one another. Do they get in each other's way?",
+  "intent": "independent",
+  "rows": [
+    "########",
+    "#R..F..#",
+    "#.#..#.#",
+    "#G.....#",
+    "#..#.EE#",
+    "#....E.#",
+    "########"
+  ],
+  "party": {"R": "ranger", "G": "rogue", "F": "fighter"},
+  "startTerrain": "floor"
+}

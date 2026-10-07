@@ -1,0 +1,16 @@
+{
+  "name": "Separate Ways",
+  "brief": "Two members, two paths. Each finds its own way to the exit.",
+  "intent": "independent",
+  "rows": [
+    "#######",
+    "#F...E#",
+    "#######",
+    "#G#.#.#",
+    "##.#.##",
+    "#.#.#E#",
+    "#######"
+  ],
+  "party": {"F": "fighter", "G": "rogue"},
+  "startTerrain": "floor"
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Trading Places",
+  "brief": "The mage never walks: it trades places with a party member up to three squares away.",
+  "intent": "combination",
+  "rows": [
+    "#######",
+    "#M..EE#",
+    "#F....#",
+    "#######"
+  ],
+  "party": {"M": "mage", "F": "fighter"},
+  "startTerrain": "floor"
+}

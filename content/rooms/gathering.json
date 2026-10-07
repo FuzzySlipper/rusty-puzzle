@@ -1,0 +1,15 @@
+{
+  "name": "The Gathering",
+  "brief": "The whole party together for the first time.",
+  "intent": "combination",
+  "rows": [
+    "#######",
+    "#F..EE#",
+    "#R..EE#",
+    "#G....#",
+    "#M..#.#",
+    "#######"
+  ],
+  "party": {"F": "fighter", "R": "ranger", "G": "rogue", "M": "mage"},
+  "startTerrain": "floor"
+}

@@ -24,10 +24,10 @@ Authored content (content/)
 | `src/RustyPuzzle.Game/Session/` | `PuzzleCommand` and `PuzzleAction`, the one command vocabulary; `Receipt` and `Refusal`; `PuzzleSession`, the one owner of play: the room, the history of adopted `Turn`s (board and move count), the selection, the selected member's legal moves, the exit-zone win, and what a pointer press means |
 | `src/RustyPuzzle.Game/Presentation/` | Board view tuning and its loader; `BoardView`, the presentation built from one tuning load: `BoardLayout`, the one source of block geometry that drawing and picking share; `BoardCamera`, the orthographic camera that follows the UI element anchored as its view, fitted to the room from that view's aspect, and pointer picking from canvas to view through `CameraQueries.Ray`; `BoardScene`, the primitive appearances and published snapshot of a `BoardPicture` (board, selection, legal-move markers and the previewed move's effects) |
 | `src/RustyPuzzle.Game/Interface/` | `HudText` (the HUD screen's words, including one sentence per refusal) and `Template`; `CommandPayload`, the `puzzle.command` wire form of session commands; `HudProjection`, the projection built from the session; `PuzzleHud`, its `UiValues.FromJson` publication on one UI stream; `PuzzleDebugCommands` and the `PlaytestDebugModule` adapter |
-| `src/RustyPuzzle.Game/RustyPuzzle.Game.csproj` | Product entry, content/UI roots, one content bundle per content directory, the `puzzle.command` payload intent, projection identity, `demand` lifecycle and unlocked cursor |
+| `src/RustyPuzzle.Game/RustyPuzzle.Game.csproj` | Product entry, content/UI roots, one content bundle per content directory, the `puzzle.command` payload intent, projection identity, `realtime` lifecycle and unlocked cursor |
 | `src/ui/main.js` | DOM HUD: room, move count, selection and law, status, controls, party and legal-move buttons from the projection; the anchored board view element; sends the projected commands; UI cleanup |
 | `content/` | Product-authored data, one directory per domain ([content](content.md)) |
-| `tests/RustyPuzzle.Smoke/` | Callback smoke test over `EngineTestHost`: a harness, the content packed into Engine containers, and one check file per domain |
+| `tests/RustyPuzzle.Smoke/` | Callback smoke test over `EngineTestHost`: a harness, the content packed into Engine containers, one check file per domain, and `SolverChecks`, the breadth-first solvability and intent check of every shipped room |
 | Engine SDK/runtime | Generated interop, admitted updates/input, retained UI transport, host, renderer, and browser shell |
 
 ## Lifecycle and data flow
@@ -40,9 +40,11 @@ domain owner and fails, naming the file, on any invalid authored value; it
 then opens the UI stream and builds the board view (camera, layout, scene),
 disposing what it made if any step fails.
 
-The product runs in `demand` lifecycle mode: the board is turn-based and has
-nothing to animate, so the Engine admits an `Update` when input arrives
-instead of at a fixed rate. Each update applies the admitted input in order.
+The product runs in `realtime` lifecycle mode. The board is turn-based, but its
+camera must refit when the page lays out or resizes the board view, and a
+`demand` product receives no update for a layout change (rusty-engine #9629).
+An update without input only refits the camera and redraws an unchanged
+picture; an update with input applies it in order.
 A primary pointer press with a position is converted from canvas to the
 board's view, turned into a world ray by the fitted camera, and picks the
 nearest cell block (falling back to the board plane under the gaps between

@@ -1,0 +1,14 @@
+{
+  "name": "Odd One Out",
+  "brief": "Diagonal steps keep the rogue on one colour of square. A trade with the mage puts it on the other.",
+  "intent": "combination",
+  "rows": [
+    "#######",
+    "#GM...#",
+    "#.....#",
+    "#...EE#",
+    "#######"
+  ],
+  "party": {"G": "rogue", "M": "mage"},
+  "startTerrain": "floor"
+}

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using RustyPuzzle.Game.Board;
 using RustyPuzzle.Game.Content;
 using RustyPuzzle.Game.Party;
@@ -8,9 +9,23 @@ namespace RustyPuzzle.Game.Rooms;
 /// An authored room, <c>content/rooms/&lt;id&gt;.json</c>: equal-length rows of terrain symbols, where a
 /// <paramref name="Party"/> marker places that member on <paramref name="StartTerrain"/>.
 /// </summary>
+/// <param name="Brief">The room's one new idea, in a sentence or two the interface shows.</param>
+/// <param name="Intent">What the room is designed to ask of the party; the solver check holds it to that.</param>
 /// <param name="Party">Room marker character to party member ID.</param>
 /// <param name="StartTerrain">The terrain kind ID under each party marker.</param>
-internal sealed record RoomDefinition(string Name, string[] Rows, Dictionary<string, string> Party, string StartTerrain);
+internal sealed record RoomDefinition(string Name, string Brief, RoomIntent Intent, string[] Rows, Dictionary<string, string> Party,
+    string StartTerrain);
+
+/// <summary>What a room is designed to ask of the party.</summary>
+[JsonConverter(typeof(KebabCase<RoomIntent>))]
+internal enum RoomIntent
+{
+    /// <summary>The members need one another: no solution exists without a swap or a vault over a member.</summary>
+    Combination,
+
+    /// <summary>A control room: each member can do its own job without help from another.</summary>
+    Independent,
+}
 
 /// <summary>The authored order rooms are played in, <c>content/campaign/rooms.json</c>.</summary>
 internal sealed record RoomOrder(string[] Order)
@@ -21,7 +36,7 @@ internal sealed record RoomOrder(string[] Order)
 }
 
 /// <summary>A room interpreted against the terrain and party vocabularies.</summary>
-internal sealed record Room(string Id, string Name, BoardGrid Grid, IReadOnlyList<Placement> Starts)
+internal sealed record Room(string Id, string Name, string Brief, RoomIntent Intent, BoardGrid Grid, IReadOnlyList<Placement> Starts)
 {
     /// <summary>The content domain and bundle: <c>content/rooms/</c>.</summary>
     internal const string Domain = "rooms";
@@ -103,6 +118,6 @@ internal sealed record Room(string Id, string Name, BoardGrid Grid, IReadOnlyLis
         int exits = cells.Count(cell => cell.Exit);
         Authored.Require(exits >= starts.Count, path, "rows",
             $"has {exits} exit cell(s) for a party of {starts.Count}; the whole party must fit on the exits.");
-        return new Room(id, definition.Name, new BoardGrid(width, definition.Rows.Length, cells), starts);
+        return new Room(id, definition.Name, definition.Brief, definition.Intent, new BoardGrid(width, definition.Rows.Length, cells), starts);
     }
 }

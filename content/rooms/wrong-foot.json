@@ -1,0 +1,15 @@
+{
+  "name": "Wrong Foot",
+  "brief": "The ranger's two-square strides never reach some squares. The mage can change that.",
+  "intent": "combination",
+  "rows": [
+    "#######",
+    "#R....#",
+    "#.....#",
+    "#.M.EE#",
+    "#.....#",
+    "#######"
+  ],
+  "party": {"R": "ranger", "M": "mage"},
+  "startTerrain": "floor"
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Round the Bend",
+  "brief": "A narrow hall, a corner, and the fighter ahead of the ranger again.",
+  "intent": "combination",
+  "rows": [
+    "#########",
+    "#R.F....#",
+    "#######.#",
+    "#######.#",
+    "#######E#",
+    "#######E#",
+    "#########"
+  ],
+  "party": {"R": "ranger", "F": "fighter"},
+  "startTerrain": "floor"
+}

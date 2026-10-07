@@ -1,0 +1,14 @@
+{
+  "name": "Slantwise",
+  "brief": "The rogue only steps diagonally, slipping between the corners of walls.",
+  "intent": "independent",
+  "rows": [
+    "#######",
+    "#G#.#.#",
+    "##.#.##",
+    "#.#.#E#",
+    "#######"
+  ],
+  "party": {"G": "rogue"},
+  "startTerrain": "floor"
+}

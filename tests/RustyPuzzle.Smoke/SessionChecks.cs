@@ -14,6 +14,22 @@ static class SessionChecks
         ResetAndPointer(engine);
         Win(engine);
         Refusals(engine);
+        Picker(engine);
+    }
+
+    private static void Picker(IEngineContext engine)
+    {
+        using PackedContent shipped = PackedContent.Shipped();
+        using Harness puzzle = new(engine, shipped);
+        string[] order = [.. puzzle.Product.Content.Rooms.Select(room => room.Id)];
+        bool reachedAll = true;
+        for (int index = order.Length - 1; index >= 0; index--)
+        {
+            puzzle.Send(puzzle.Hud()["rooms"]![index]!["command"]!.ToJsonString());
+            reachedAll &= (string?)puzzle.Observe()["room"] == order[index] && (bool)puzzle.Hud()["rooms"]![index]!["current"]!;
+        }
+
+        Check(reachedAll && order.Length == puzzle.Hud()["rooms"]!.AsArray().Count, "the room picker's projected commands reach every room of the authored order");
     }
 
     private static void UndoEachLaw(IEngineContext engine)

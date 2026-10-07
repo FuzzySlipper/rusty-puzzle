@@ -1,8 +1,9 @@
 # DOM companion
 
 `src/ui/main.js` exports `mountProductUi`. It observes the Engine-delivered
-`rusty.puzzle.board` projection and shows the room name, the move count, the
-selected member and the law it moves by, the Undo, Reset and Next room
+`rusty.puzzle.board` projection and shows a room picker (a native select of
+the authored order whose options send their projected room commands), the
+room name and brief, the move count, the selected member and the law it moves by, the Undo, Reset and Next room
 controls (disabled as projected), a status sentence for screen readers
 (`role="status"`), one button per party member and one per legal move. A button
 sends the command its projection entry carries, through the payload intent the

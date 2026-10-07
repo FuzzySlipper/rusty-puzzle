@@ -16,9 +16,12 @@
     <RustyEngineProductContentRoot>$(MSBuildProjectDirectory)/../../content</RustyEngineProductContentRoot>
     <RustyEngineProductUiProjectionStream>rusty-puzzle</RustyEngineProductUiProjectionStream>
     <RustyEngineProductUiProjectionContract>rusty.puzzle.board</RustyEngineProductUiProjectionContract>
-    <!-- The board is turn-based and has nothing to animate: the Engine admits an update when
-         input arrives instead of at a fixed rate. -->
-    <RustyEngineProductLifecycleMode>demand</RustyEngineProductLifecycleMode>
+    <!-- The board is turn-based, but its camera must refit when the page lays out or resizes the
+         board view, and a demand product gets no update for a layout change (rusty-engine #9629).
+         Realtime updates let the camera follow; an update without input only refits and redraws. -->
+    <RustyEngineProductLifecycleMode>realtime</RustyEngineProductLifecycleMode>
+    <RustyEngineProductFixedStepHz>60</RustyEngineProductFixedStepHz>
+    <RustyEngineProductFixedStepMaxCatchUpSteps>4</RustyEngineProductFixedStepMaxCatchUpSteps>
     <!-- The pointer picks board cells, so the cursor stays free. -->
     <RustyEngineProductInputCursorMode>unlocked</RustyEngineProductInputCursorMode>
     <RustyEngineWatchPaths>$(MSBuildProjectDirectory);$(RustyEngineProductUiRoot);$(RustyEngineProductContentRoot)</RustyEngineWatchPaths>

@@ -1,0 +1,16 @@
+{
+  "name": "Two Chambers",
+  "brief": "Ranger and rogue each have a chamber and an exit of their own.",
+  "intent": "independent",
+  "rows": [
+    "#########",
+    "#R.....E#",
+    "#########",
+    "#G#.#.#.#",
+    "##.#.#.##",
+    "#.#.#.#E#",
+    "#########"
+  ],
+  "party": {"R": "ranger", "G": "rogue"},
+  "startTerrain": "floor"
+}

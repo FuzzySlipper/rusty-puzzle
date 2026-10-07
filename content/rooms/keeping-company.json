@@ -1,0 +1,16 @@
+{
+  "name": "Keeping Company",
+  "brief": "Fighter, rogue and mage: the mage can carry either one where it cannot walk.",
+  "intent": "combination",
+  "rows": [
+    "########",
+    "#F.#...#",
+    "#..#.G.#",
+    "#M.....#",
+    "#...#EE#",
+    "#....#E#",
+    "########"
+  ],
+  "party": {"F": "fighter", "G": "rogue", "M": "mage"},
+  "startTerrain": "floor"
+}
