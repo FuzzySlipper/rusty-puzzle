@@ -46,6 +46,14 @@ static class ProgressChecks
         Write(engine, "{\"version\": 2, \"rooms\": {}}");
         Check(Refusal(() => { using var product = Harness.Create(engine, shipped); product.Start(); }).Contains("version 2", StringComparison.Ordinal),
             "a save of another format version is reported, not misread");
+        Write(engine, "{\"version\": 1, \"rooms\": {\"first-steps\": null}}");
+        Check(Refusal(() => { using var product = Harness.Create(engine, shipped); product.Start(); })
+                .StartsWith("persistence rusty-puzzle/progress: room 'first-steps'", StringComparison.Ordinal),
+            "a saved room with no result is refused at start");
+        Write(engine, "{\"version\": 1, \"rooms\": {\"first-steps\": {\"bestMoves\": -1}}}");
+        Check(Refusal(() => { using var product = Harness.Create(engine, shipped); product.Start(); })
+                .StartsWith("persistence rusty-puzzle/progress: room 'first-steps'", StringComparison.Ordinal),
+            "a saved room with an impossible move count is refused at start");
         Clear(engine);
     }
 

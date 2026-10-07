@@ -67,6 +67,16 @@ internal sealed class ProgressStore : IDisposable
             throw new InvalidOperationException($"{Location}: saved progress is version {saved.Version}; this build reads version {Progress.CurrentVersion}.");
         }
 
+        // The JSON options do not enforce nullability inside dictionary values, so each result is checked here.
+        foreach ((string room, RoomProgress? result) in saved.Rooms)
+        {
+            if (result is null || result.BestMoves < 0)
+            {
+                throw new InvalidOperationException(
+                    $"{Location}: room '{room}' has an invalid result ({(result is null ? "null" : $"bestMoves {result.BestMoves}")}).");
+            }
+        }
+
         Current = saved;
         _revision = load.Revision;
     }
