@@ -58,13 +58,12 @@ another loop, clock, scheduler, renderer, or state authority downstream.
 Prefer ordinary readable C#, explicit composition, direct methods, and one
 clear mutable owner per domain. Keep operations thin: read, decide, apply,
 publish. Use typed boundaries where they help; do not introduce a framework,
-reflection discovery, generic bus, or service locator for hypothetical needs.
+reflection discovery, generic bus, scripting language, or service locator for
+hypothetical needs.
 
 Use nullable types, file-scoped namespaces, and `internal`/`sealed` defaults
 where the public product contract does not require otherwise. Keep structural
-constants beside their algorithm; give meaningful identities names. Put
-adjustable gameplay values and authored definitions in domain-owned content
-when the product needs tuning, rather than hiding them in call sites.
+constants beside their algorithm; give meaningful identities names.
 
 Trust first-party runtime state and Engine-admitted data. Preserve concrete
 eligibility rules, current-data errors, and resource lifetime/disposal. Do not
@@ -72,6 +71,71 @@ add repeated hashing, compatibility layers, whole-state rollback, or validation
 ceremony without a task-owned failure it prevents. Save meaningful values at
 explicit save boundaries; native handles and presentation resources are not
 product save state.
+
+## Content and code organization
+
+This game is content heavy and will be tuned constantly: characters, movement
+laws, interactions, terrain, enemies, rooms and their introduction order all
+change as the puzzle grammar is discovered. Organize ahead of need: agents and
+people extend the shape they find, so an ad hoc catch-all becomes the pattern
+every later change follows. Put an addition where its future siblings will
+live. If the file, class or module you are extending is already a catch-all,
+split it along domain lines first, as its own change. Organization means
+folders, files, typed records and named owners, not a framework, generic
+registry, rule engine or plugin system.
+
+- **Authored data is a domain-organized tree.** `content/` has directories and
+  files named for what they hold (party members, movement laws and
+  interactions, terrain kinds, enemy behaviors, rooms, campaigns or room
+  order, tuning, interface text). A product-named or catch-all file
+  (`puzzle.json`, `data.json`, `config.json`) is a smell. Keep reusable
+  definitions (a character, a terrain kind, an enemy kind) apart from where one
+  room places them. Each domain loads and validates its own typed records; do
+  not funnel all content through one record that every owner reads.
+- **Gameplay rules are composed from typed parts, not written into classes.**
+  A character is an authored composition of parts: a movement law, zero or more
+  interaction rules, and presentation. A movement law is a typed record from a
+  small closed vocabulary (step pattern, distance rule, path rule, blocking
+  rule, target rule) that one owner evaluates; the ranger's "exactly two" and
+  the fighter's "one orthogonal" are different values of the same records, not
+  two classes with hand-written move methods. Interactions (swap, pull, push,
+  teleport, change an ally's law) are typed effect records dispatched by the
+  owning domain. Terrain kinds, enemy behaviors and room objectives follow the
+  same shape: a definition composed of typed parts, with the behavior for each
+  part written once. Adding a new character from existing parts is a content
+  edit; adding a genuinely new part is one typed record plus one evaluator,
+  never a `switch` on a name or a subclass per character.
+- **Consequences are explicit typed effects.** A move resolves to a list of
+  typed board effects (occupy, vacate, swap, displace, exit, modify a law) that
+  one applier executes and the projection can preview; legal-move display,
+  undo and tests all read the same effects. Do not mutate board state inside
+  rule evaluation.
+- **No gameplay prose in C# or JS.** Names, descriptions, rule sentences,
+  prompts, refusal reasons and control labels belong in their domain's content
+  as templates filled from definition values. Never repeat a definition's name
+  or number inside a literal. Code composes text; it does not author it. A
+  screen module's fixed chrome may live in its markup, and so may
+  developer-console output.
+- **Gameplay values are tuning.** Board sizes, distances, ranges, counts,
+  highlight timings and limits go in content. A C# `const` is not tuning
+  support. Missing or invalid authored values fail validation naming the file
+  and field; no silent defaults.
+- **Variants are typed.** A kind, mode or behavior is an enum or typed record in
+  its definition, dispatched by the owning domain. Do not compare strings in
+  rules, views or projections.
+- **One table per vocabulary.** Key bindings and labels, intent actions, cell
+  and piece kinds, projected facts and saved fields each have one declaration
+  that every consumer (C# input, rules, projection, DOM, tests, playtest
+  module) reads. A feature should not be added in several places that must be
+  kept in step by hand.
+- **Size signals prompt a split.** A C# owner past roughly 300 lines, a method
+  interleaving several domains, a JS module holding more than one screen, or a
+  JSON file spanning several domains is the cue to divide before extending.
+  These are prompts to look, not gates.
+
+Resist the opposite failure too. The closed vocabularies stay small and
+concrete, grown one typed part at a time by a real room that needs it; this is
+not a general rules engine, expression language or data-driven everything.
 
 ## Engine dependencies and gaps
 
