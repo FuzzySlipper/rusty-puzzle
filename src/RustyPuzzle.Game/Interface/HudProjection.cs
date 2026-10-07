@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using RustyPuzzle.Game.Board;
 using RustyPuzzle.Game.Movement;
 using RustyPuzzle.Game.Party;
+using RustyPuzzle.Game.Persistence;
 using RustyPuzzle.Game.Presentation;
 using RustyPuzzle.Game.Rooms;
 using RustyPuzzle.Game.Session;
@@ -16,7 +17,7 @@ namespace RustyPuzzle.Game.Interface;
 /// </summary>
 internal static class HudProjection
 {
-    internal static JsonObject Build(PuzzleSession session, HudText text)
+    internal static JsonObject Build(PuzzleSession session, HudText text, Progress progress)
     {
         PartyMember? selected = session.SelectedMember;
         JsonArray party = [];
@@ -47,9 +48,14 @@ internal static class HudProjection
         for (int index = 0; index < session.Rooms.Count; index++)
         {
             Room room = session.Rooms[index];
+            (string, string) number = ("number", (index + 1).ToString(CultureInfo.InvariantCulture));
+            RoomProgress? solved = progress.Rooms.GetValueOrDefault(room.Id);
             rooms.Add(new JsonObject
             {
-                ["label"] = Template.Fill(text.RoomOption, ("number", (index + 1).ToString(CultureInfo.InvariantCulture)), ("room", room.Name)),
+                ["label"] = solved is null
+                    ? Template.Fill(text.RoomOption, number, ("room", room.Name))
+                    : Template.Fill(text.RoomOptionSolved, number, ("room", room.Name), ("best", solved.BestMoves.ToString(CultureInfo.InvariantCulture))),
+                ["solved"] = solved is not null,
                 ["current"] = room == session.Room,
                 ["command"] = CommandPayload.ToJson(PuzzleCommand.ChooseRoom(room.Id)),
             });

@@ -62,10 +62,12 @@ internal sealed class PuzzleSession
 
     internal Receipt Submit(PuzzleCommand command)
     {
+        (Room room, bool solved) before = (Room, Solved);
         Refusal? refused = Execute(command);
         LastRefusal = refused;
         Refresh();
-        return new Receipt(refused, Revision);
+        bool solvedNow = Solved && !(before.solved && before.room == Room);
+        return new Receipt(refused, Revision, solvedNow ? (Room.Id, MoveCount) : null);
     }
 
     /// <summary>

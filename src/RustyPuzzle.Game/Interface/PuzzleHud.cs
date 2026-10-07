@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using Rusty.Engine;
+using RustyPuzzle.Game.Persistence;
 using RustyPuzzle.Game.Session;
 
 namespace RustyPuzzle.Game.Interface;
@@ -25,9 +26,9 @@ internal sealed class PuzzleHud : IDisposable
     /// <summary>The last projection published, for observation.</summary>
     internal JsonObject? Current { get; private set; }
 
-    internal void Publish(PuzzleSession session, HudText text)
+    internal void Publish(PuzzleSession session, HudText text, Progress progress)
     {
-        JsonObject projection = HudProjection.Build(session, text);
+        JsonObject projection = HudProjection.Build(session, text, progress);
         string json = projection.ToJsonString();
         if (json == _published)
         {

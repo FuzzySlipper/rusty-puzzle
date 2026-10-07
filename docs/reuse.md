@@ -100,7 +100,9 @@ member), `rusty-goldbox` `418d151…` `src/ui/panels/controls.js` (projected mov
 `src/RustyRoguelike.Product/Session/GameSession.cs` (commands with an expected
 revision, execute on a candidate, adopt, receipt; here the immutable board
 makes the candidate a plain new state), `rusty-goldbox` `418d151…`
-`src/RustyGoldbox.Game/Presentation/SceneView.cs` (camera viewport anchored to a UI element); `rusty-d20`
+`src/RustyGoldbox.Game/Presentation/SceneView.cs` (camera viewport anchored to a UI element),
+`rusty-goldbox` `418d151…` `src/RustyGoldbox.Core/Campaigns/SaveSlots.cs` (a small owner over
+`ProductStateStore` opened in a callback and disposed with the product); `rusty-d20`
 `047934240040ac889ac787239bfec5f9fa8c7a2a` `RustyD20Product.cs`
 (`TacticalCamera`, an orthographic overhead camera), `rusty-crawler`
 `8c3996ea4cff5002f02cd04dc10287a1aca30260` `ProductPlaytest.cs`

@@ -32,8 +32,11 @@ internal enum Refusal
     NoSuchRoom,
 }
 
-/// <summary>What became of a command: accepted, or refused and why, with the session's revision afterwards.</summary>
-internal sealed record Receipt(Refusal? Refused, ulong Revision)
+/// <summary>
+/// What became of a command: accepted, or refused and why, with the session's revision afterwards.
+/// <paramref name="Solved"/> is the room this command solved, with its move count: the solve boundary.
+/// </summary>
+internal sealed record Receipt(Refusal? Refused, ulong Revision, (string Room, int Moves)? Solved = null)
 {
     internal bool Accepted => Refused is null;
 }

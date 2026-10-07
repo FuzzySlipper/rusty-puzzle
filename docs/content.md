@@ -116,7 +116,7 @@ them as help.
 ## Interface text
 
 Templates name their values in braces: `{member}`, `{terrain}`, `{column}`,
-`{row}` and `{count}`; `alsoMoves` also takes `{move}`, the move's words so far, once per
+`{row}`, `{count}`, `{number}`, `{room}` and `{best}`; `alsoMoves` also takes `{move}`, the move's words so far, once per
 other member the move relocates. Columns and rows are shown counting from one. C# fills templates;
 it never authors the words.
 

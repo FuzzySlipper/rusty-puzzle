@@ -3,6 +3,7 @@
   "roomLabel": "Room",
   "roomsLabel": "Choose a room",
   "roomOption": "{number}. {room}",
+  "roomOptionSolved": "{number}. {room} \u2014 solved in {best}",
   "selectedLabel": "Selected",
   "lawLabel": "Moves by",
   "moveCountLabel": "Moves made",

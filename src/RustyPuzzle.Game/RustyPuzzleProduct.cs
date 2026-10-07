@@ -4,6 +4,7 @@ using Rusty.Engine.Debugging;
 using RustyPuzzle.Game.Board;
 using RustyPuzzle.Game.Content;
 using RustyPuzzle.Game.Interface;
+using RustyPuzzle.Game.Persistence;
 using RustyPuzzle.Game.Presentation;
 using RustyPuzzle.Game.Session;
 
@@ -19,6 +20,7 @@ public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSour
     private readonly IEngineContext _engine;
     private readonly AuthoredContent _authored;
     private readonly PuzzleHud _hud;
+    private readonly ProgressStore _progress;
     private PuzzleContent _content;
     private BoardView _view;
     // The cell under a free pointer: the legal move targeting it is previewed. Presentation only.
@@ -40,6 +42,7 @@ public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSour
         {
             _content = PuzzleContent.Load(authored);
             _hud = new PuzzleHud(_engine.Ui);
+            _progress = new ProgressStore(_engine);
             _view = new BoardView(_engine, _content.View);
             Session = new PuzzleSession(_content.Rooms);
         }
@@ -58,7 +61,13 @@ public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSour
 
     internal PuzzleHud Hud => _hud;
 
-    public void Start() => Publish();
+    internal ProgressStore Progress => _progress;
+
+    public void Start()
+    {
+        _progress.Load();
+        Publish();
+    }
 
     public ProductUpdateResult Update(ProductUpdate update)
     {
@@ -120,6 +129,7 @@ public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSour
         _disposed = true;
         _view?.Dispose();
         _hud?.Dispose();
+        _progress?.Dispose();
     }
 
     public void RegisterDebugCommands(IDebugCommandModuleRegistrar registrar)
@@ -130,7 +140,13 @@ public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSour
     }
 
     /// <summary>A primary press at a pointer position (normalized, bottom-left origin), as the session reads presses.</summary>
-    internal Receipt PressAt(Vector2 point) => Session.Press(_view.Pick(Session.Board, point));
+    internal Receipt PressAt(Vector2 point) => Press(_view.Pick(Session.Board, point));
+
+    /// <summary>Submits a command and records progress when it solves the room.</summary>
+    internal Receipt Submit(PuzzleCommand command) => Record(Session.Submit(command));
+
+    /// <summary>A press on a cell, as the session reads presses, recording progress when it solves the room.</summary>
+    internal Receipt Press(Cell? cell) => Record(Session.Press(cell));
 
     /// <summary>Notes the cell under a free pointer, whose legal move (if any) the board previews.</summary>
     internal void PointAt(Vector2 point) => _pointed = _view.Pick(Session.Board, point);
@@ -143,7 +159,18 @@ public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSour
     internal void Publish()
     {
         _view.Publish(Picture());
-        _hud.Publish(Session, _content.Hud);
+        _hud.Publish(Session, _content.Hud, _progress.Current);
+    }
+
+    // The solve boundary: the only moment progress is saved.
+    private Receipt Record(Receipt receipt)
+    {
+        if (receipt.Solved is var (room, moves))
+        {
+            _progress.Solved(room, moves);
+        }
+
+        return receipt;
     }
 
     private void Apply(ReadOnlySpan<ProductInputEvent> input)
@@ -160,7 +187,7 @@ public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSour
             }
             else if (CommandPayload.From(item) is PuzzleCommand command)
             {
-                Session.Submit(command);
+                Submit(command);
             }
         }
     }

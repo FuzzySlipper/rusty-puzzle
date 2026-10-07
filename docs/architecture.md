@@ -23,6 +23,7 @@ Authored content (content/)
 | `src/RustyPuzzle.Game/Rooms/` | Authored room format and room order and their loader, and interpretation of ASCII rows against the terrain and party vocabularies (a room needs at least as many exit cells as party members) |
 | `src/RustyPuzzle.Game/Session/` | `PuzzleCommand` and `PuzzleAction`, the one command vocabulary; `Receipt` and `Refusal`; `PuzzleSession`, the one owner of play: the room, the history of adopted `Turn`s (board and move count), the selection, the selected member's legal moves, the exit-zone win, and what a pointer press means |
 | `src/RustyPuzzle.Game/Presentation/` | Board view tuning and its loader; `BoardView`, the presentation built from one tuning load: `BoardLayout`, the one source of block geometry that drawing and picking share; `BoardCamera`, the orthographic camera that follows the UI element anchored as its view, fitted to the room from that view's aspect, and pointer picking from canvas to view through `CameraQueries.Ray`; `BoardScene`, the primitive appearances and published snapshot of a `BoardPicture` (board, selection, legal-move markers and the previewed move's effects) |
+| `src/RustyPuzzle.Game/Persistence/` | `ProgressStore`, the one owner of saved progress: a small versioned record of solved rooms and best move counts in Engine persistence (`ProductStateStore` with a source-generated JSON codec), loaded at start and saved only at the solve boundary |
 | `src/RustyPuzzle.Game/Interface/` | `HudText` (the HUD screen's words, including one sentence per refusal) and `Template`; `CommandPayload`, the `puzzle.command` wire form of session commands; `HudProjection`, the projection built from the session; `PuzzleHud`, its `UiValues.FromJson` publication on one UI stream; `PuzzleDebugCommands` and the `PlaytestDebugModule` adapter |
 | `src/RustyPuzzle.Game/RustyPuzzle.Game.csproj` | Product entry, content/UI roots, one content bundle per content directory, the `puzzle.command` payload intent, projection identity, `realtime` lifecycle and unlocked cursor |
 | `src/ui/main.js` | DOM HUD: room, move count, selection and law, status, controls, party and legal-move buttons from the projection; the anchored board view element; sends the projected commands; UI cleanup |
@@ -65,7 +66,12 @@ which steps back one history entry, takes them back too. Board-changing
 commands name the revision they were made against and are refused when it is
 stale; every refusal changes nothing and has authored words. The room is
 solved when every party member stands on an exit cell at once; a solved room
-refuses moves until undone or reset.
+refuses moves until undone or reset. A receipt names the room a command just
+solved; the product saves that room's move count when it beats the best so
+far. That solve boundary is the only save: pausing, quitting or leaving a room
+mid-play saves nothing. Progress loads at `Start`; a save that cannot be read,
+or is of another format version, faults naming the store instead of starting
+afresh. The picker marks solved rooms with their best move count.
 
 After applying input the product publishes: the camera refits when the room
 or the view's size or place changed, the scene republishes when the board

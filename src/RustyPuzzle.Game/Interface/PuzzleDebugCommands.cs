@@ -18,22 +18,22 @@ internal sealed class PuzzleDebugCommands(RustyPuzzleProduct product) : IDebugCo
     public DebugCommandResult Inspect() => DebugCommandResult.Success(Observe().ToJsonString());
 
     [DebugCommand("puzzle.press", Description = "Press a cell at a column and row (from 0, top-left) as the pointer does: with a member selected, a legal target makes that move; otherwise it selects the cell.")]
-    public DebugCommandResult Press(int column, int row) => Submitted(product.Session.Press(new Cell(column, row)));
+    public DebugCommandResult Press(int column, int row) => Submitted(product.Press(new Cell(column, row)));
 
     [DebugCommand("puzzle.select", Description = "Select the cell at a column and row (from 0, top-left), as the interface's select command does.")]
-    public DebugCommandResult Select(int column, int row) => Submitted(product.Session.Submit(PuzzleCommand.Select(column, row)));
+    public DebugCommandResult Select(int column, int row) => Submitted(product.Submit(PuzzleCommand.Select(column, row)));
 
     [DebugCommand("puzzle.clear", Description = "Clear the selection, as the interface's clear command does.")]
-    public DebugCommandResult Clear() => Submitted(product.Session.Submit(new PuzzleCommand(PuzzleAction.Clear)));
+    public DebugCommandResult Clear() => Submitted(product.Submit(new PuzzleCommand(PuzzleAction.Clear)));
 
     [DebugCommand("puzzle.undo", Description = "Take back the last move or reset in this room, as the Undo control does.")]
-    public DebugCommandResult Undo() => Submitted(product.Session.Submit(PuzzleCommand.Undo(product.Session.Revision)));
+    public DebugCommandResult Undo() => Submitted(product.Submit(PuzzleCommand.Undo(product.Session.Revision)));
 
     [DebugCommand("puzzle.reset", Description = "Return the room to its authored start, as the Reset control does; undo brings the board back.")]
-    public DebugCommandResult Reset() => Submitted(product.Session.Submit(PuzzleCommand.Reset(product.Session.Revision)));
+    public DebugCommandResult Reset() => Submitted(product.Submit(PuzzleCommand.Reset(product.Session.Revision)));
 
     [DebugCommand("puzzle.room", Description = "Play a room of the authored order from its start, by room ID.")]
-    public DebugCommandResult Room(string id) => Submitted(product.Session.Submit(PuzzleCommand.ChooseRoom(id)));
+    public DebugCommandResult Room(string id) => Submitted(product.Submit(PuzzleCommand.ChooseRoom(id)));
 
     [DebugCommand("puzzle.pick", Description = "Press the primary pointer at a view position (0 to 1, bottom-left origin) through the board's picking path.")]
     public DebugCommandResult Pick(float x, float y) => float.IsFinite(x) && float.IsFinite(y)
@@ -99,6 +99,8 @@ internal sealed class PuzzleDebugCommands(RustyPuzzleProduct product) : IDebugCo
             ["revision"] = session.Revision,
             ["solved"] = session.Solved,
             ["refused"] = session.LastRefusal?.ToString(),
+            ["progress"] = new JsonObject(product.Progress.Current.Rooms.Select(pair =>
+                KeyValuePair.Create<string, JsonNode?>(pair.Key, pair.Value.BestMoves))),
             ["selected"] = session.Selected is Cell cell
                 ? new JsonObject { ["column"] = cell.Column, ["row"] = cell.Row, ["member"] = session.SelectedMember?.Id }
                 : null,
