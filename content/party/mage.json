@@ -1,1 +1,1 @@
-{ "name": "Mage", "law": "near-swap", "look": { "colour": [0.35, 0.42, 0.9], "mark": "Ma" } }
+{ "name": "Mage", "law": "near-swap", "interactions": [], "look": { "colour": [0.35, 0.42, 0.9], "mark": "Ma" } }

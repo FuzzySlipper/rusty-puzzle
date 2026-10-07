@@ -18,6 +18,7 @@ namespace RustyPuzzle.Game.Content;
 [JsonSerializable(typeof(TerrainDefinition))]
 [JsonSerializable(typeof(LawDefinition))]
 [JsonSerializable(typeof(MemberDefinition))]
+[JsonSerializable(typeof(InteractionDefinition))]
 [JsonSerializable(typeof(RoomDefinition))]
 [JsonSerializable(typeof(RoomOrder))]
 [JsonSerializable(typeof(HudText))]

@@ -60,3 +60,25 @@ internal enum Measure
     /// <summary>The larger of the row and column difference: a diagonal square counts as one.</summary>
     Chebyshev,
 }
+
+/// <summary>Distances between cells by <see cref="Measure"/>.</summary>
+internal static class Distances
+{
+    internal static int Between(Board.Cell a, Board.Cell b, Measure measure)
+    {
+        int columns = Math.Abs(a.Column - b.Column);
+        int rows = Math.Abs(a.Row - b.Row);
+        return measure switch
+        {
+            Measure.Manhattan => columns + rows,
+            Measure.Chebyshev => Math.Max(columns, rows),
+            _ => throw new InvalidOperationException($"No measure {measure}."),
+        };
+    }
+
+    internal static bool Within(Board.Cell a, Board.Cell b, DistanceRange range, Measure measure)
+    {
+        int distance = Between(a, b, measure);
+        return distance >= range.Min && distance <= range.Max;
+    }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Scholar",
+  "law": "single-step",
+  "interactions": [
+    {
+      "kind": "lend",
+      "rule": "A party member beside the scholar, even diagonally, may also step one square up, down, left or right.",
+      "within": { "min": 1, "max": 1 },
+      "measure": "chebyshev",
+      "law": "single-step"
+    }
+  ],
+  "look": { "colour": [0.75, 0.3, 0.6], "mark": "Sc" }
+}

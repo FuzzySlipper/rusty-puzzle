@@ -1,0 +1,14 @@
+{
+  "name": "Borrowed Footing",
+  "brief": "The scholar lends a straight step to anyone standing beside it, and a straight step changes the rogue's colour.",
+  "intent": "combination",
+  "rows": [
+    "#######",
+    "#G...E#",
+    "#.###E#",
+    "#S....#",
+    "#######"
+  ],
+  "party": {"G": "rogue", "S": "scholar"},
+  "startTerrain": "floor"
+}

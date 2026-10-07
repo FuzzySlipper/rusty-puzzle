@@ -30,6 +30,29 @@ static class LawChecks
 
         SwapPreview(engine);
         ContentOnlyMember(engine);
+        Lend(engine);
+    }
+
+    /// <summary>The scholar's lend: a member beside it may also move by the lent law, and only while beside it.</summary>
+    private static void Lend(IEngineContext engine)
+    {
+        using PackedContent content = PackedContent.WithRoom(["#######", "#.....#", "#.GS..#", "#.....#", "#EE...#", "#######"],
+            new() { ['G'] = "rogue", ['S'] = "scholar" });
+        using Harness puzzle = new(engine, content);
+        puzzle.Send("{\"action\":\"select\",\"column\":2,\"row\":2}");
+        var moves = puzzle.Product.Session.Moves;
+        Cell[] lent = [.. moves.Where(move => move.Lender?.Id == "scholar").Select(move => move.Target)];
+        Check(Same([.. moves.Select(move => move.Target)], [new(1, 1), new(3, 1), new(1, 3), new(3, 3), new(2, 1), new(1, 2), new(2, 3)])
+            && Same(lent, [new(2, 1), new(1, 2), new(2, 3)]),
+            "a member beside the scholar may also move by the lent law, marked as lent, never onto a member");
+        Check(((string?)puzzle.Hud()["law"])!.Contains("beside the scholar", StringComparison.Ordinal),
+            "the HUD states the lent law with the member's own while it applies");
+
+        puzzle.MoveVia(3, 2, 4, 2);
+        puzzle.Send("{\"action\":\"select\",\"column\":2,\"row\":2}");
+        Check(Same([.. puzzle.Product.Session.Moves.Select(move => move.Target)], [new(1, 1), new(3, 1), new(1, 3), new(3, 3)])
+            && !((string?)puzzle.Hud()["law"])!.Contains("beside the scholar", StringComparison.Ordinal),
+            "the lend ends when the scholar steps away");
     }
 
     /// <summary>Selects a cell and checks the legal targets the board marks, the moves the HUD lists and the inspection agree.</summary>
@@ -79,7 +102,7 @@ static class LawChecks
             ["######", "#....#", "#.S#.#", "#.F..#", "#EEEE#", "######"], new() { ['S'] = "scout", ['F'] = "fighter" });
         content.Write("laws/dash.json",
             "{\"rule\": \"Dashes one or two squares in any direction along an open line.\", \"moves\": [{\"kind\": \"step\", \"directions\": \"any\", \"distance\": {\"min\": 1, \"max\": 2}, \"path\": \"clear\"}]}");
-        content.Write("party/scout.json", "{\"name\": \"Scout\", \"law\": \"dash\", \"look\": {\"colour\": [0.6, 0.6, 0.6], \"mark\": \"Sc\"}}");
+        content.Write("party/scout.json", "{\"name\": \"Scout\", \"law\": \"dash\", \"interactions\": [], \"look\": {\"colour\": [0.6, 0.6, 0.6], \"mark\": \"Sc\"}}");
         using Harness puzzle = new(engine, content);
         puzzle.Advance(Harness.Claim("{\"action\":\"select\",\"column\":2,\"row\":2}"));
         Cell[] targets = [.. puzzle.Product.Picture().Moves.Select(move => move.Target)];

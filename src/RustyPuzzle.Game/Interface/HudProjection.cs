@@ -82,7 +82,7 @@ internal static class HudProjection
             ["brief"] = session.Room.Brief,
             ["rooms"] = rooms,
             ["selected"] = selected?.Name ?? text.NobodySelected,
-            ["law"] = selected?.Law.Rule,
+            ["law"] = selected is null ? null : LawText(session, selected),
             ["moveCount"] = session.MoveCount,
             ["solved"] = session.Solved,
             ["status"] = Status(session, selected, text),
@@ -93,6 +93,14 @@ internal static class HudProjection
             ["view"] = new JsonObject { ["anchor"] = BoardCamera.ViewAnchor },
         };
     }
+
+    /// <summary>
+    /// What the member moves by: its own law, what its interactions do for others, and what other members'
+    /// interactions lend it where it stands now.
+    /// </summary>
+    private static string LawText(PuzzleSession session, PartyMember member) => string.Join(" ",
+        [member.Law.Rule, .. member.Interactions.Select(interaction => interaction.Rule),
+            .. LegalMoves.Lends(session.Board, member).Select(lend => lend.Rule)]);
 
     /// <summary>A refusal first, then a solved room, then what is selected.</summary>
     private static string Status(PuzzleSession session, PartyMember? member, HudText text)

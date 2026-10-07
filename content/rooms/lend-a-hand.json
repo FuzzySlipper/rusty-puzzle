@@ -1,0 +1,15 @@
+{
+  "name": "Lend a Hand",
+  "brief": "Ranger and rogue both need a step their own laws forbid. The scholar can only stand beside one of them at a time.",
+  "intent": "combination",
+  "rows": [
+    "########",
+    "#R...G.#",
+    "#.#.##.#",
+    "#S.....#",
+    "###.EEE#",
+    "########"
+  ],
+  "party": {"R": "ranger", "S": "scholar", "G": "rogue"},
+  "startTerrain": "floor"
+}

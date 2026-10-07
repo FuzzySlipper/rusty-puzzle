@@ -1,1 +1,1 @@
-{ "name": "Fighter", "law": "single-step", "look": { "colour": [0.78, 0.26, 0.22], "mark": "Fi" } }
+{ "name": "Fighter", "law": "single-step", "interactions": [], "look": { "colour": [0.78, 0.26, 0.22], "mark": "Fi" } }

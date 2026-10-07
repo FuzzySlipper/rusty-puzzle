@@ -7,7 +7,7 @@ using static Checks;
 /// <summary>
 /// Every shipped room, in the authored order, solved breadth-first with the product's own laws and effect
 /// applier: each must be solvable, and its authored intent must hold. A combination room has no solution
-/// without a swap or a vault over a member; an independent room does. Prints each room's shortest solution.
+/// without a swap, a lent move or a vault over a member; an independent room does. Prints each room's shortest solution.
 /// </summary>
 static class SolverChecks
 {
@@ -71,10 +71,10 @@ static class SolverChecks
         return (null, reached.Count);
     }
 
-    /// <summary>A move that uses another member: a swap, or a step that vaults over a member.</summary>
+    /// <summary>A move that uses another member: a swap, a law lent by another member, or a step that vaults over a member.</summary>
     private static bool Helped(BoardState board, Move move)
     {
-        if (move.Part is SwapMove)
+        if (move.Part is SwapMove || move.Lender is not null)
         {
             return true;
         }

@@ -15,7 +15,7 @@ own ID. Colours are linear `[r, g, b]` with components from 0 to 1.
 | --- | --- | --- |
 | `terrain/<id>.json` | One terrain kind: `name` (the noun interface text uses), `symbol` (one character in room rows), `passable`, `exit`, `look.colour`, `look.height` (cells) | `Board/TerrainKind.cs` |
 | `laws/<id>.json` | One reusable movement law: `rule` (its one sentence) and `moves` (below) | `Movement/MovementLaw.cs` |
-| `party/<id>.json` | One party member: `name`, `law` (a law ID), `look.colour`, `look.mark` (one or two letters for lists) | `Party/PartyMember.cs` |
+| `party/<id>.json` | One party member: `name`, `law` (a law ID), `interactions` (below; `[]` for none), `look.colour`, `look.mark` (one or two letters for lists) | `Party/PartyMember.cs` |
 | `rooms/<id>.json` | One room: `name`, `brief`, `intent`, `rows`, `party`, `startTerrain` (below) | `Rooms/Room.cs` |
 | `campaign/rooms.json` | `order`: room IDs in play order; the first opens at start | `Rooms/Room.cs` (`RoomOrder`) |
 | `interface/<screen>.json` | One interface screen's words and templates; `hud.json` is the board HUD, including `refusals`, one sentence per session refusal keyed by its kebab-case name (all required, no extras) | `Interface/HudText.cs` |
@@ -97,6 +97,21 @@ file. A genuinely new way of moving is one part record in
 `Movement/MovePart.cs` and one evaluator file beside `StepMoves.cs`, dispatched
 from `LegalMoves`; it returns `Move`s whose effects say what would change.
 When two parts of a law reach the same cell, the earlier part decides it.
+
+## Interactions
+
+A member's `interactions` change what other members may do. Each is
+`{"kind": ..., "rule": ..., fields}`, from a closed vocabulary like move parts;
+`rule` is its one sentence, shown with the laws it changes.
+
+| Kind | Fields | Meaning |
+| --- | --- | --- |
+| `lend` | `within: {min, max}`, `measure`, `law` (a law ID) | Another member whose distance from this one is within `within` may also move by `law`, from where it stands. Its own law decides a cell both reach. |
+
+A new kind of interaction is one record in `Movement/Interaction.cs`, its
+binding in `Party/PartyMember.cs` and its evaluation in `LegalMoves`; moves it
+allows carry the member who made them possible, so the solver check counts
+them as help.
 
 ## Interface text
 
