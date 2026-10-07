@@ -17,10 +17,11 @@ Authored content (content/)
 | --- | --- |
 | `src/RustyPuzzle.Game/RustyPuzzleProduct.cs` | Explicit composition and lifecycle: loads content, plays the first room of the authored order, routes admitted pointer presses and interface commands, publishes the board view and projection, reloads content on restart, registers debug modules |
 | `src/RustyPuzzle.Game/Content/` | `AuthoredContent`/`AuthoredDomain`: opening one domain's content bundle and strict source-generated JSON reads that name the file and field. `ContentJson`: the authored record types. `PuzzleContent`: one consistent load composed from each domain owner's `Load` |
-| `src/RustyPuzzle.Game/Board/` | `Cell`; terrain kinds (symbol, passable, exit, look) and their loader; `BoardGrid`, the room's terrain per cell |
-| `src/RustyPuzzle.Game/Party/` | Party member definitions (name, look) and their loader |
-| `src/RustyPuzzle.Game/Rooms/` | Authored room format and room order and their loader, interpretation of ASCII rows against the terrain and party vocabularies, and `RoomState`: the live placements and selection of the room being played, with a revision for republishing |
-| `src/RustyPuzzle.Game/Presentation/` | Board view tuning and its loader; `BoardView`, the presentation built from one tuning load: `BoardLayout`, the one source of block geometry that drawing and picking share; `BoardCamera`, the orthographic camera fitted to the room from the surface aspect, and pointer picking through `CameraQueries.Ray`; `BoardScene`, the primitive appearances and published snapshot |
+| `src/RustyPuzzle.Game/Board/` | `Cell`; terrain kinds (symbol, passable, exit, look) and their loader; `BoardGrid`, the room's terrain per cell; `BoardState`, one immutable moment of the board (terrain and placements); `BoardEffect` records and `BoardEffects.Apply`, the one applier that makes the next state |
+| `src/RustyPuzzle.Game/Movement/` | Reusable movement laws and their loader; `MovePart`, the closed vocabulary of ways to move (`step`, `swap`) with their typed directions, distances, path rules and measures; `LegalMoves`, the one owner that dispatches each part to its evaluator (`StepMoves`, `SwapMoves`) and returns `Move`s carrying their board effects, without changing the board |
+| `src/RustyPuzzle.Game/Party/` | Party member definitions (name, law, look) and their loader |
+| `src/RustyPuzzle.Game/Rooms/` | Authored room format and room order and their loader, interpretation of ASCII rows against the terrain and party vocabularies, and `RoomState`: the room's current board, the selection and the selected member's legal moves, with a revision for republishing |
+| `src/RustyPuzzle.Game/Presentation/` | Board view tuning and its loader; `BoardView`, the presentation built from one tuning load: `BoardLayout`, the one source of block geometry that drawing and picking share; `BoardCamera`, the orthographic camera fitted to the room from the surface aspect, and pointer picking through `CameraQueries.Ray`; `BoardScene`, the primitive appearances and published snapshot of a `BoardPicture` (board, selection, legal-move markers and the previewed move's effects) |
 | `src/RustyPuzzle.Game/Interface/` | `HudText` (the HUD screen's words) and `Template`; `PuzzleCommand`, the one `{action, ...}` payload vocabulary; `PuzzleHud`, the `UiValues.FromJson` projection on one UI stream; `PuzzleDebugCommands` and the `PlaytestDebugModule` adapter |
 | `src/RustyPuzzle.Game/RustyPuzzle.Game.csproj` | Product entry, content/UI roots, one content bundle per content directory, the `puzzle.command` payload intent, projection identity, `demand` lifecycle and unlocked cursor |
 | `src/ui/main.js` | DOM HUD: room, selection, status text and party buttons from the projection; sends the projected commands; UI cleanup |
@@ -45,7 +46,11 @@ a primary pointer press with a position is turned into a world ray by the
 fitted camera and picks the nearest cell block (falling back to the board
 plane under the gaps between blocks; off the board clears the selection), and
 a `puzzle.command` payload is parsed into a typed command and applied to the
-room state. A malformed payload is a first-party defect and faults the
+room state. A pointer position event picks the cell under the free cursor;
+when it is a legal move's target, the board previews that move by drawing a
+token where each member it relocates would stand. Selecting a member computes
+its legal moves once from its law; the board marks their targets and the
+projection lists them in words read from the same effects. A malformed payload is a first-party defect and faults the
 runtime with the contract named. Paused interface claims reach
 `HandlePausedIntents` and take the same path.
 

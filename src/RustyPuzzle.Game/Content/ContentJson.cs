@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using RustyPuzzle.Game.Board;
 using RustyPuzzle.Game.Interface;
+using RustyPuzzle.Game.Movement;
 using RustyPuzzle.Game.Party;
 using RustyPuzzle.Game.Presentation;
 using RustyPuzzle.Game.Rooms;
@@ -11,8 +12,11 @@ namespace RustyPuzzle.Game.Content;
 // unknown members are errors, not defaults. A new authored record adds its line here.
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
     RespectRequiredConstructorParameters = true, RespectNullableAnnotations = true,
-    UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow)]
+    UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+    // A move part's "kind" may appear anywhere in its object.
+    AllowOutOfOrderMetadataProperties = true)]
 [JsonSerializable(typeof(TerrainDefinition))]
+[JsonSerializable(typeof(LawDefinition))]
 [JsonSerializable(typeof(MemberDefinition))]
 [JsonSerializable(typeof(RoomDefinition))]
 [JsonSerializable(typeof(RoomOrder))]

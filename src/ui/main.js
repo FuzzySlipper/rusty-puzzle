@@ -20,8 +20,10 @@ export function mountProductUi(root, context) {
   const room = element('dd');
   const selectedLabel = element('dt');
   const selected = element('dd');
-  for (const value of [room, selected]) value.style.margin = '0';
-  facts.append(roomLabel, room, selectedLabel, selected);
+  const lawLabel = element('dt');
+  const law = element('dd');
+  for (const value of [room, selected, law]) value.style.margin = '0';
+  facts.append(roomLabel, room, selectedLabel, selected, lawLabel, law);
 
   const status = element('p', { id: 'rusty-puzzle-status' });
   status.setAttribute('role', 'status');
@@ -34,7 +36,13 @@ export function mountProductUi(root, context) {
   party.setAttribute('aria-labelledby', partyHeading.id);
   party.style.cssText = 'list-style:none;margin:0;padding:0;display:grid;gap:4px';
 
-  panel.append(title, facts, status, partyHeading, party);
+  const movesHeading = element('h2', { id: 'rusty-puzzle-moves' });
+  movesHeading.style.cssText = 'font-size:14px;margin:8px 0 4px';
+  const moves = element('ul');
+  moves.setAttribute('aria-labelledby', movesHeading.id);
+  moves.style.cssText = 'margin:0;padding-left:18px';
+
+  panel.append(title, facts, status, partyHeading, party, movesHeading, moves);
   root.append(panel);
 
   let intent = null;
@@ -50,10 +58,14 @@ export function mountProductUi(root, context) {
     room.textContent = value.room;
     selectedLabel.textContent = value.labels.selected;
     selected.textContent = value.selected;
+    // The law row shows only while a member is selected.
+    lawLabel.hidden = law.hidden = value.law === null || value.law === undefined;
+    lawLabel.textContent = value.labels.law;
+    law.textContent = value.law ?? '';
     status.textContent = value.status;
     partyHeading.textContent = value.labels.party;
     party.replaceChildren(...value.party.map((member) => {
-      const button = element('button', { type: 'button', textContent: member.place });
+      const button = element('button', { type: 'button', textContent: `${member.mark} · ${member.place}` });
       button.setAttribute('aria-label', member.label);
       button.setAttribute('aria-pressed', String(member.selected));
       button.dataset.rustyPuzzleMember = member.id;
@@ -64,6 +76,9 @@ export function mountProductUi(root, context) {
       item.append(button);
       return item;
     }));
+    movesHeading.hidden = moves.hidden = value.moves.length === 0;
+    movesHeading.textContent = value.labels.moves;
+    moves.replaceChildren(...value.moves.map((move) => element('li', { textContent: move.label })));
   };
 
   const unsubscribe = context?.projection?.subscribe?.((envelope) => {

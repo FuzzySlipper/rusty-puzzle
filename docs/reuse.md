@@ -91,7 +91,11 @@ adapted copies; no sibling is a build dependency.
 | `rusty-goldbox` `418d151…` | `src/RustyGoldbox.Game/GameCommands.cs` | `Interface/PuzzleCommand.cs`: one payload intent filtered by intent and contract, `{action, ...}` body | `077ab633ba32cb56d6335dcb414dfcd54ebf1d71cdeac3e5318092ad7033f64e` |
 | `rusty-craftsurvive` `6d635625ecce950a3c9d3708174489c1ebdebba7` | `src/CraftSurvive.Game/Modules/World/WorldMapVoxelView.cs` | `RustyPuzzleProduct.cs` press filter (primary, pressed, with position) and `Presentation/BoardCamera.cs` aspect from `CameraView.ReadSurface()` with a fallback before the page reports | `546af0d896f4aff7c0671d8cf244000cbb8e0d4b9f0267ad197519359d45769a` |
 
-Consulted for direction only, with nothing copied: `rusty-d20`
+Consulted for direction only, with nothing copied: `rusty-rifles`
+`70c9cee3473bff9672ec4d4080baa7ad78960d71` `Dungeon/MovementGrid.cs`
+(occupancy with an admit predicate; its crowd and reservation model does not
+fit a turn-based board), `rusty-crawler` `8c3996e…` `src/PartyRpg.Kit/Party/PartyRoster.cs` (selected
+member), `rusty-goldbox` `418d151…` `src/ui/panels/controls.js` (projected move list); `rusty-d20`
 `047934240040ac889ac787239bfec5f9fa8c7a2a` `RustyD20Product.cs`
 (`TacticalCamera`, an orthographic overhead camera), `rusty-crawler`
 `8c3996ea4cff5002f02cd04dc10287a1aca30260` `ProductPlaytest.cs`

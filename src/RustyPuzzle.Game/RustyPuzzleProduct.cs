@@ -1,6 +1,7 @@
 using System.Numerics;
 using Rusty.Engine;
 using Rusty.Engine.Debugging;
+using RustyPuzzle.Game.Board;
 using RustyPuzzle.Game.Content;
 using RustyPuzzle.Game.Interface;
 using RustyPuzzle.Game.Presentation;
@@ -20,6 +21,8 @@ public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSour
     private readonly PuzzleHud _hud;
     private PuzzleContent _content;
     private BoardView _view;
+    // The cell under a free pointer: the legal move targeting it is previewed. Presentation only.
+    private Cell? _pointed;
     private bool _disposed;
 
     public RustyPuzzleProduct(ProductCreateContext context)
@@ -90,6 +93,7 @@ public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSour
         _view = view;
         _content = content;
         Room = new RoomState(content.Rooms[0]);
+        _pointed = null;
         Publish();
     }
 
@@ -117,14 +121,21 @@ public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSour
     }
 
     /// <summary>Selects the cell drawn at a pointer position (normalized, bottom-left origin); off the board clears.</summary>
-    internal void PickAt(Vector2 point) => Room.Select(_view.Pick(Room, point));
+    internal void PickAt(Vector2 point) => Room.Select(_view.Pick(Room.Board, point));
+
+    /// <summary>Notes the cell under a free pointer, whose legal move (if any) the board previews.</summary>
+    internal void PointAt(Vector2 point) => _pointed = _view.Pick(Room.Board, point);
+
+    /// <summary>What the board view shows now.</summary>
+    internal BoardPicture Picture() =>
+        new(Room.Board, Room.Selected, Room.Moves, Room.Moves.FirstOrDefault(move => move.Target == _pointed));
 
     internal bool Apply(PuzzleCommand command) => command.ApplyTo(Room);
 
     /// <summary>Shows the current room state in the board view and the interface.</summary>
     internal void Publish()
     {
-        _view.Publish(Room);
+        _view.Publish(Picture());
         _hud.Publish(Room, _content.Hud);
     }
 
@@ -135,6 +146,10 @@ public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSour
             if (item is { Kind: InputEventKind.PointerButton, PointerButton: PointerButton.Primary, Edge: InputEdge.Pressed, HasPosition: true })
             {
                 PickAt(new Vector2(item.X, item.Y));
+            }
+            else if (item.Kind == InputEventKind.PointerPosition)
+            {
+                PointAt(new Vector2(item.X, item.Y));
             }
             else if (PuzzleCommand.From(item) is PuzzleCommand command)
             {

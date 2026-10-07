@@ -2,11 +2,16 @@
   "title": "Rusty Puzzle",
   "roomLabel": "Room",
   "selectedLabel": "Selected",
+  "lawLabel": "Moves by",
   "partyHeading": "Party",
+  "movesHeading": "Legal moves",
   "nobodySelected": "Nobody",
   "nothingSelected": "Nothing is selected. Click a board cell or choose a party member.",
   "cellSelected": "Selected the {terrain} at column {column}, row {row}.",
   "memberSelected": "Selected the {member} on the {terrain} at column {column}, row {row}.",
+  "noMoves": "The {member} has no legal move from here.",
   "memberPlace": "{member}, column {column}, row {row}",
-  "selectMember": "Select the {member}"
+  "selectMember": "Select the {member}",
+  "moveTo": "Move to column {column}, row {row}",
+  "alsoMoves": "{move}; the {member} goes to column {column}, row {row}"
 }

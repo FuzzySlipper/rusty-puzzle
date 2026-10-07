@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using Rusty.Engine;
 using Rusty.Engine.Debugging;
 using RustyPuzzle.Game.Board;
+using RustyPuzzle.Game.Movement;
 using RustyPuzzle.Game.Rooms;
 
 namespace RustyPuzzle.Game.Interface;
@@ -13,7 +14,7 @@ namespace RustyPuzzle.Game.Interface;
 /// </summary>
 internal sealed class PuzzleDebugCommands(RustyPuzzleProduct product) : IDebugCommandModule
 {
-    [DebugCommand("puzzle.inspect", Description = "Read the room, its terrain rows, where each party member stands, the selection and the camera fit.")]
+    [DebugCommand("puzzle.inspect", Description = "Read the room, its terrain rows, where each party member stands, the selection, the selected member's legal moves with their effects, and the camera fit.")]
     public DebugCommandResult Inspect() => DebugCommandResult.Success(Observe().ToJsonString());
 
     [DebugCommand("puzzle.select", Description = "Select the cell at a column and row (from 0, top-left), as the interface's select command does.")]
@@ -58,9 +59,30 @@ internal sealed class PuzzleDebugCommands(RustyPuzzleProduct product) : IDebugCo
         }
 
         JsonArray members = [];
-        foreach (Placement placed in room.Placements)
+        foreach (Placement placed in room.Board.Placements)
         {
             members.Add(new JsonObject { ["id"] = placed.Member.Id, ["column"] = placed.Cell.Column, ["row"] = placed.Cell.Row });
+        }
+
+        JsonArray moves = [];
+        foreach (Move move in room.Moves)
+        {
+            JsonArray effects = [];
+            foreach (BoardEffect effect in move.Effects)
+            {
+                effects.Add(effect switch
+                {
+                    Relocated relocated => new JsonObject
+                    {
+                        ["relocated"] = relocated.Member.Id,
+                        ["from"] = new JsonArray(relocated.From.Column, relocated.From.Row),
+                        ["to"] = new JsonArray(relocated.To.Column, relocated.To.Row),
+                    },
+                    _ => new JsonObject { ["effect"] = effect.GetType().Name },
+                });
+            }
+
+            moves.Add(new JsonObject { ["column"] = move.Target.Column, ["row"] = move.Target.Row, ["effects"] = effects });
         }
 
         CameraDescriptor camera = product.View.Camera.Descriptor;
@@ -72,6 +94,7 @@ internal sealed class PuzzleDebugCommands(RustyPuzzleProduct product) : IDebugCo
             ["height"] = grid.Height,
             ["rows"] = rows,
             ["members"] = members,
+            ["moves"] = moves,
             ["selected"] = room.Selected is Cell cell
                 ? new JsonObject { ["column"] = cell.Column, ["row"] = cell.Row, ["member"] = room.SelectedMember?.Id }
                 : null,

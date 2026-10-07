@@ -6,5 +6,6 @@ using Rusty.Engine.Testing;
 using EngineTestHost host = EngineTestHost.Create(new EngineTestHostOptions());
 host.Call(ContentChecks.Run);
 host.Call(SelectionChecks.Run);
+host.Call(LawChecks.Run);
 host.Call(DebugChecks.Run);
 Console.WriteLine("Rusty Puzzle smoke passed.");

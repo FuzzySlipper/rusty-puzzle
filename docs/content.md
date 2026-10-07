@@ -14,11 +14,12 @@ own ID. Colours are linear `[r, g, b]` with components from 0 to 1.
 | Domain | Holds | Owner |
 | --- | --- | --- |
 | `terrain/<id>.json` | One terrain kind: `name` (the noun interface text uses), `symbol` (one character in room rows), `passable`, `exit`, `look.colour`, `look.height` (cells) | `Board/TerrainKind.cs` |
-| `party/<id>.json` | One party member: `name`, `look.colour` | `Party/PartyMember.cs` |
+| `laws/<id>.json` | One reusable movement law: `rule` (its one sentence) and `moves` (below) | `Movement/MovementLaw.cs` |
+| `party/<id>.json` | One party member: `name`, `law` (a law ID), `look.colour`, `look.mark` (one or two letters for lists) | `Party/PartyMember.cs` |
 | `rooms/<id>.json` | One room: `name`, `rows`, `party`, `startTerrain` (below) | `Rooms/Room.cs` |
 | `campaign/rooms.json` | `order`: room IDs in play order; the first opens at start | `Rooms/Room.cs` (`RoomOrder`) |
 | `interface/<screen>.json` | One interface screen's words and templates; `hud.json` is the board HUD | `Interface/HudText.cs` |
-| `tuning/board-view.json` | Camera pitch and fill, cell gap, piece size, selection marker, background | `Presentation/BoardViewTuning.cs` |
+| `tuning/board-view.json` | Camera pitch and fill, cell gap, piece size, selection and destination markers, move preview tokens, background | `Presentation/BoardViewTuning.cs` |
 
 Keep a reusable definition (a terrain kind, a party member) in its own file
 and apart from where a room places it. Keep each file to one domain: a new
@@ -60,10 +61,28 @@ terrain symbol, and each marker appears exactly once.
 Add a room by adding its file and naming it in `campaign/rooms.json`. A new
 terrain kind is a new file in `terrain/` with an unused symbol.
 
+## Movement laws
+
+A member obeys one law; several members may share a law. A law's `moves` is a
+list of move parts, each `{"kind": ..., fields}` from a small closed
+vocabulary. Every part has `distance: {min, max}` in squares (1 to 32).
+
+| Kind | Fields | Meaning |
+| --- | --- | --- |
+| `step` | `directions`: `orthogonal`, `diagonal` or `any`; `path`: `clear` or `over-party` | A straight line, no turns, landing `distance` squares away on an open cell (passable, nobody there). `clear`: every crossed square is open. `over-party`: crossed squares are passable, and members on them are vaulted over. |
+| `swap` | `measure`: `manhattan` or `chebyshev` | Trade places with another member whose distance, by the measure, is within `distance`. |
+
+A new character from existing parts is content only: a law file and a party
+file. A genuinely new way of moving is one part record in
+`Movement/MovePart.cs` and one evaluator file beside `StepMoves.cs`, dispatched
+from `LegalMoves`; it returns `Move`s whose effects say what would change.
+When two parts of a law reach the same cell, the earlier part decides it.
+
 ## Interface text
 
 Templates name their values in braces: `{member}`, `{terrain}`, `{column}`
-and `{row}`. Columns and rows are shown counting from one. C# fills templates;
+and `{row}`; `alsoMoves` also takes `{move}`, the move's words so far, once per
+other member the move relocates. Columns and rows are shown counting from one. C# fills templates;
 it never authors the words.
 
 ## Iterating under `rusty dev`

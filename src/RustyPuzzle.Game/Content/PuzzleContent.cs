@@ -1,5 +1,6 @@
 using RustyPuzzle.Game.Board;
 using RustyPuzzle.Game.Interface;
+using RustyPuzzle.Game.Movement;
 using RustyPuzzle.Game.Party;
 using RustyPuzzle.Game.Presentation;
 using RustyPuzzle.Game.Rooms;
@@ -12,6 +13,7 @@ namespace RustyPuzzle.Game.Content;
 /// </summary>
 internal sealed record PuzzleContent(
     IReadOnlyDictionary<string, TerrainKind> Terrain,
+    IReadOnlyDictionary<string, MovementLaw> Laws,
     IReadOnlyDictionary<string, PartyMember> Party,
     IReadOnlyList<Room> Rooms,
     HudText Hud,
@@ -20,7 +22,8 @@ internal sealed record PuzzleContent(
     internal static PuzzleContent Load(AuthoredContent content)
     {
         IReadOnlyDictionary<string, TerrainKind> terrain = TerrainKind.Load(content);
-        IReadOnlyDictionary<string, PartyMember> party = PartyMember.Load(content);
-        return new PuzzleContent(terrain, party, Room.Load(content, terrain, party), HudText.Load(content), BoardViewTuning.Load(content));
+        IReadOnlyDictionary<string, MovementLaw> laws = MovementLaw.Load(content);
+        IReadOnlyDictionary<string, PartyMember> party = PartyMember.Load(content, laws);
+        return new PuzzleContent(terrain, laws, party, Room.Load(content, terrain, party), HudText.Load(content), BoardViewTuning.Load(content));
     }
 }

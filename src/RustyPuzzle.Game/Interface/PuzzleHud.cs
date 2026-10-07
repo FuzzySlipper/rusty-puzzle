@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Rusty.Engine;
 using RustyPuzzle.Game.Board;
+using RustyPuzzle.Game.Movement;
 using RustyPuzzle.Game.Party;
 using RustyPuzzle.Game.Rooms;
 
@@ -53,17 +54,24 @@ internal sealed class PuzzleHud : IDisposable
     {
         PartyMember? selected = room.SelectedMember;
         JsonArray party = [];
-        foreach (Placement placed in room.Placements)
+        foreach (Placement placed in room.Board.Placements)
         {
             party.Add(new JsonObject
             {
                 ["id"] = placed.Member.Id,
                 ["name"] = placed.Member.Name,
+                ["mark"] = placed.Member.Mark,
                 ["place"] = Template.Fill(text.MemberPlace, Member(placed.Member), Column(placed.Cell), Row(placed.Cell)),
                 ["selected"] = placed.Member == selected,
                 ["label"] = Template.Fill(text.SelectMember, Member(placed.Member)),
                 ["command"] = Command(PuzzleCommand.Select(placed.Cell.Column, placed.Cell.Row)),
             });
+        }
+
+        JsonArray moves = [];
+        foreach (Move move in room.Moves)
+        {
+            moves.Add(new JsonObject { ["label"] = MoveLabel(move, text) });
         }
 
         return new JsonObject
@@ -73,11 +81,15 @@ internal sealed class PuzzleHud : IDisposable
             {
                 ["room"] = text.RoomLabel,
                 ["selected"] = text.SelectedLabel,
+                ["law"] = text.LawLabel,
                 ["party"] = text.PartyHeading,
+                ["moves"] = text.MovesHeading,
             },
             ["room"] = room.Room.Name,
             ["selected"] = selected?.Name ?? text.NobodySelected,
+            ["law"] = selected?.Law.Rule,
             ["status"] = Status(room, selected, text),
+            ["moves"] = moves,
             ["party"] = party,
             ["intent"] = new JsonObject { ["id"] = PuzzleCommand.Intent, ["contract"] = PuzzleCommand.Contract },
         };
@@ -91,9 +103,32 @@ internal sealed class PuzzleHud : IDisposable
         }
 
         (string, string) terrain = ("terrain", room.Room.Grid.TerrainAt(cell).Name);
-        return member is null
-            ? Template.Fill(text.CellSelected, terrain, Column(cell), Row(cell))
-            : Template.Fill(text.MemberSelected, Member(member), terrain, Column(cell), Row(cell));
+        if (member is null)
+        {
+            return Template.Fill(text.CellSelected, terrain, Column(cell), Row(cell));
+        }
+
+        string selected = Template.Fill(text.MemberSelected, Member(member), terrain, Column(cell), Row(cell));
+        return room.Moves.Count > 0 ? selected : $"{selected} {Template.Fill(text.NoMoves, Member(member))}";
+    }
+
+    /// <summary>
+    /// A move in words, read from its effects so every kind of move is described the same way: where the
+    /// mover goes, then where each other member it moves goes.
+    /// </summary>
+    private static string MoveLabel(Move move, HudText text)
+    {
+        Cell lands = move.Effects.OfType<Relocated>().FirstOrDefault(relocated => relocated.Member == move.Member)?.To ?? move.Target;
+        string label = Template.Fill(text.MoveTo, Column(lands), Row(lands));
+        foreach (BoardEffect effect in move.Effects)
+        {
+            if (effect is Relocated relocated && relocated.Member != move.Member)
+            {
+                label = Template.Fill(text.AlsoMoves, ("move", label), Member(relocated.Member), Column(relocated.To), Row(relocated.To));
+            }
+        }
+
+        return label;
     }
 
     private static JsonNode Command(PuzzleCommand command) =>

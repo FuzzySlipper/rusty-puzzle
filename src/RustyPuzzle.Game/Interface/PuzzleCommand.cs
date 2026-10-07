@@ -3,12 +3,13 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Rusty.Engine;
 using RustyPuzzle.Game.Board;
+using RustyPuzzle.Game.Content;
 using RustyPuzzle.Game.Rooms;
 
 namespace RustyPuzzle.Game.Interface;
 
 /// <summary>What a <see cref="PuzzleCommand"/> asks for.</summary>
-[JsonConverter(typeof(PuzzleActionConverter))]
+[JsonConverter(typeof(KebabCase<PuzzleAction>))]
 internal enum PuzzleAction
 {
     /// <summary>Select the cell at <see cref="PuzzleCommand.Column"/>, <see cref="PuzzleCommand.Row"/>.</summary>
@@ -61,8 +62,6 @@ internal sealed record PuzzleCommand(PuzzleAction Action, int? Column = null, in
         }
     }
 }
-
-internal sealed class PuzzleActionConverter() : JsonStringEnumConverter<PuzzleAction>(JsonNamingPolicy.KebabCaseLower, allowIntegerValues: false);
 
 // Missing constructor values, nulls in non-nullable fields and unknown members are errors, not defaults.
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,

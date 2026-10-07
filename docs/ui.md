@@ -1,9 +1,10 @@
 # DOM companion
 
 `src/ui/main.js` exports `mountProductUi`. It observes the Engine-delivered
-`rusty.puzzle.board` projection and shows the room name, the selected member,
-a status sentence for screen readers (`role="status"`) and one button per
-party member. A button sends the command its projection entry carries,
+`rusty.puzzle.board` projection and shows the room name, the selected member
+and the law it moves by, a status sentence for screen readers
+(`role="status"`), one button per party member and the selected member's
+legal moves in words. A button sends the command its projection entry carries,
 through the payload intent the projection names (`intent.id`,
 `intent.contract`). The product project selects this directory and module for
 SDK staging.

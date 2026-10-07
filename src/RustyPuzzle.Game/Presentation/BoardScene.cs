@@ -1,43 +1,51 @@
 using System.Numerics;
 using Rusty.Engine;
 using RustyPuzzle.Game.Board;
-using RustyPuzzle.Game.Rooms;
+using RustyPuzzle.Game.Movement;
+using RustyPuzzle.Game.Party;
 
 namespace RustyPuzzle.Game.Presentation;
 
 /// <summary>
-/// Draws the room in the Engine as placeholder primitives: a block per cell in its terrain kind's colour, a
-/// ball per party member in the member's colour, and a marker over the selected cell. Cells of one kind share an
-/// appearance. The scene republishes only when the room state changed.
+/// Draws a <see cref="BoardPicture"/> in the Engine as placeholder primitives: a block per cell in its terrain
+/// kind's colour, a ball per party member in the member's colour, a marker over the selected cell and over each
+/// legal move's target, and a small token in each member's colour where the previewed move would put them.
+/// Cells of one kind share an appearance. The scene republishes only when the picture changed.
 /// </summary>
 internal sealed class BoardScene : IDisposable
 {
     private const ulong TerrainObjects = 1_000;
     private const ulong PieceObjects = 100_000;
     private const ulong SelectionObject = 200_000;
+    private const ulong DestinationObjects = 300_000;
+    private const ulong PreviewObjects = 400_000;
 
     private readonly IGraphicsService _graphics;
     private readonly BoardLayout _layout;
+    private readonly BoardViewTuning _tuning;
     private readonly Dictionary<string, Appearance> _terrain = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Appearance> _pieces = new(StringComparer.Ordinal);
     private readonly Appearance _selection;
-    private (RoomState Room, ulong Revision)? _published;
+    private readonly Appearance _destination;
+    private BoardPicture? _published;
 
     internal BoardScene(IGraphicsService graphics, BoardLayout layout, BoardViewTuning tuning)
     {
         _graphics = graphics;
         _layout = layout;
-        _selection = Primitive(tuning.SelectionColour, PrimitiveGeometry.Cube);
+        _tuning = tuning;
+        _selection = Primitive(tuning.Selection.Colour, PrimitiveGeometry.Cube);
+        _destination = Primitive(tuning.Destination.Colour, PrimitiveGeometry.Cube);
     }
 
-    internal void Publish(RoomState room)
+    internal void Publish(BoardPicture picture)
     {
-        if (_published is var (shown, revision) && ReferenceEquals(shown, room) && revision == room.Revision)
+        if (picture == _published)
         {
             return;
         }
 
-        BoardGrid grid = room.Room.Grid;
+        BoardGrid grid = picture.Board.Grid;
         List<AppearanceFact> facts = [];
         ulong id = TerrainObjects;
         foreach (Cell cell in grid.Cells())
@@ -47,18 +55,33 @@ internal sealed class BoardScene : IDisposable
         }
 
         id = PieceObjects;
-        foreach (Placement placed in room.Placements)
+        foreach (Placement placed in picture.Board.Placements)
         {
-            facts.Add(Fact(id++, Appearance(_pieces, placed.Member.Id, placed.Member.Colour, PrimitiveGeometry.Sphere), _layout.Piece(grid, placed.Cell)));
+            facts.Add(Fact(id++, Piece(placed.Member), _layout.Piece(grid, placed.Cell)));
         }
 
-        if (room.Selected is Cell selected)
+        if (picture.Selected is Cell selected)
         {
-            facts.Add(Fact(SelectionObject, _selection, _layout.Selection(grid, selected)));
+            facts.Add(Fact(SelectionObject, _selection, BoardLayout.Marker(grid, selected, _tuning.Selection)));
+        }
+
+        id = DestinationObjects;
+        foreach (Move move in picture.Moves)
+        {
+            facts.Add(Fact(id++, _destination, BoardLayout.Marker(grid, move.Target, _tuning.Destination)));
+        }
+
+        id = PreviewObjects;
+        foreach (BoardEffect effect in picture.Preview?.Effects ?? [])
+        {
+            if (effect is Relocated relocated)
+            {
+                facts.Add(Fact(id++, Piece(relocated.Member), _layout.Preview(grid, relocated.To)));
+            }
         }
 
         _graphics.PublishSnapshot(facts.ToArray());
-        _published = (room, room.Revision);
+        _published = picture;
     }
 
     public void Dispose()
@@ -71,7 +94,10 @@ internal sealed class BoardScene : IDisposable
         }
 
         _selection.Dispose();
+        _destination.Dispose();
     }
+
+    private Appearance Piece(PartyMember member) => Appearance(_pieces, member.Id, member.Colour, PrimitiveGeometry.Sphere);
 
     private Appearance Appearance(Dictionary<string, Appearance> shared, string id, Color colour, PrimitiveGeometry geometry)
     {

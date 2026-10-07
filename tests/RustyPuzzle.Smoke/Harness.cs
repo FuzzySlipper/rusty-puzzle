@@ -61,6 +61,14 @@ sealed class Harness : IDisposable
         });
     }
 
+    /// <summary>Moves a free pointer over where the board camera draws a world point.</summary>
+    internal void PointAt(Vector3 world)
+    {
+        BoardCamera camera = Product.View.Camera;
+        Vector2 point = CameraQueries.Project(camera.Descriptor, camera.Aspect, world).NormalizedPoint;
+        Advance(default(ProductInputEvent) with { Kind = InputEventKind.PointerPosition, HasPosition = true, X = point.X, Y = point.Y });
+    }
+
     internal static Vector3 TopOf(CellBlock block) => block.Centre with { Y = block.Maximum.Y };
 
     /// <summary>An interface claim of the product's payload intent.</summary>

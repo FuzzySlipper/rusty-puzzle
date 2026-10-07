@@ -1,1 +1,1 @@
-{ "name": "Ranger", "look": { "colour": [0.3, 0.6, 0.25] } }
+{ "name": "Ranger", "law": "vault-two", "look": { "colour": [0.3, 0.6, 0.25], "mark": "Ra" } }

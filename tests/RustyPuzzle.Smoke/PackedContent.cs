@@ -41,6 +41,17 @@ sealed class PackedContent : IDisposable
 
     internal void Write(string path, string text) => File.WriteAllText(Path.Combine(Root, path), text);
 
+    /// <summary>A copy of the shipped content whose authored order plays only the given room.</summary>
+    internal static PackedContent WithRoom(string[] rows, Dictionary<char, string> party)
+    {
+        PackedContent content = Copy();
+        string rowList = string.Join(", ", rows.Select(row => $"\"{row}\""));
+        string partyMap = string.Join(", ", party.Select(pair => $"\"{pair.Key}\": \"{pair.Value}\""));
+        content.Write("rooms/check.json", $"{{\"name\": \"Check\", \"rows\": [{rowList}], \"party\": {{{partyMap}}}, \"startTerrain\": \"floor\"}}");
+        content.Write("campaign/rooms.json", "{\"order\": [\"check\"]}");
+        return content;
+    }
+
     internal AuthoredContent Authored(IEngineContext engine) => new(domain =>
     {
         string container = Path.Combine(_scratch, $"{domain}-{Guid.NewGuid():N}.rpk");

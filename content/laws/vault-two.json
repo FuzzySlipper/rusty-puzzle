@@ -1,0 +1,6 @@
+{
+  "rule": "Moves exactly two squares in a straight line, vaulting over a party member but never a wall.",
+  "moves": [
+    { "kind": "step", "directions": "orthogonal", "distance": { "min": 2, "max": 2 }, "path": "over-party" }
+  ]
+}

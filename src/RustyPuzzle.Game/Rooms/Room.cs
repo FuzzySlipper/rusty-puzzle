@@ -20,9 +20,6 @@ internal sealed record RoomOrder(string[] Order)
     internal const string File = "rooms.json";
 }
 
-/// <summary>Where one party member begins a room.</summary>
-internal readonly record struct Placement(PartyMember Member, Cell Cell);
-
 /// <summary>A room interpreted against the terrain and party vocabularies.</summary>
 internal sealed record Room(string Id, string Name, BoardGrid Grid, IReadOnlyList<Placement> Starts)
 {

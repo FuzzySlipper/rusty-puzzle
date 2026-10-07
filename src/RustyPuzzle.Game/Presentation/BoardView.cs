@@ -1,7 +1,6 @@
 using System.Numerics;
 using Rusty.Engine;
 using RustyPuzzle.Game.Board;
-using RustyPuzzle.Game.Rooms;
 
 namespace RustyPuzzle.Game.Presentation;
 
@@ -33,17 +32,17 @@ internal sealed class BoardView : IDisposable
     internal BoardCamera Camera { get; }
 
     /// <summary>The cell drawn at a pointer position (normalized, bottom-left origin), or null off the board.</summary>
-    internal Cell? Pick(RoomState room, Vector2 point)
+    internal Cell? Pick(BoardState board, Vector2 point)
     {
-        Camera.Frame(room, Layout);
-        return Camera.Pick(room, Layout, point);
+        Camera.Frame(board.Grid, Layout);
+        return Camera.Pick(board, Layout, point);
     }
 
-    /// <summary>Fits the camera and draws the room; each part republishes only when its input changed.</summary>
-    internal void Publish(RoomState room)
+    /// <summary>Fits the camera and draws the picture; each part republishes only when its input changed.</summary>
+    internal void Publish(BoardPicture picture)
     {
-        Camera.Frame(room, Layout);
-        _scene.Publish(room);
+        Camera.Frame(picture.Board.Grid, Layout);
+        _scene.Publish(picture);
     }
 
     public void Dispose()

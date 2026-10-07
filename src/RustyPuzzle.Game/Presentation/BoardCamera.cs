@@ -1,7 +1,6 @@
 using System.Numerics;
 using Rusty.Engine;
 using RustyPuzzle.Game.Board;
-using RustyPuzzle.Game.Rooms;
 
 namespace RustyPuzzle.Game.Presentation;
 
@@ -22,7 +21,7 @@ internal sealed class BoardCamera : IDisposable
     private readonly BoardViewTuning _tuning;
     private readonly Camera _camera;
     private ulong? _surfaceRevision;
-    private RoomState? _framed;
+    private BoardGrid? _framed;
 
     internal BoardCamera(IEngineContext engine, BoardViewTuning tuning)
     {
@@ -39,27 +38,27 @@ internal sealed class BoardCamera : IDisposable
     /// <summary>The width-to-height ratio of the view the camera was last fitted to.</summary>
     internal double Aspect { get; private set; } = FallbackAspect;
 
-    /// <summary>Refits the camera when the room or the view's size changed since the last fit.</summary>
-    internal void Frame(RoomState room, BoardLayout layout)
+    /// <summary>Refits the camera when the room's grid or the view's size changed since the last fit.</summary>
+    internal void Frame(BoardGrid grid, BoardLayout layout)
     {
         CameraSurfaceReadout surface = _engine.CameraView.ReadSurface();
-        if (ReferenceEquals(room, _framed) && _surfaceRevision == surface.Revision)
+        if (ReferenceEquals(grid, _framed) && _surfaceRevision == surface.Revision)
         {
             return;
         }
 
-        _framed = room;
+        _framed = grid;
         _surfaceRevision = surface.Revision;
         Aspect = surface.Reported && surface.CssWidth > 0 && surface.CssHeight > 0 ? surface.CssWidth / surface.CssHeight : FallbackAspect;
-        Descriptor = Fit(room, layout);
+        Descriptor = Fit(grid, layout);
         _engine.CameraView.UpdateCamera(new CameraUpdateRequest(_camera, Descriptor));
     }
 
     /// <summary>The cell drawn at a pointer position (normalized, bottom-left origin), or null off the board.</summary>
-    internal Cell? Pick(RoomState room, BoardLayout layout, Vector2 point)
+    internal Cell? Pick(BoardState board, BoardLayout layout, Vector2 point)
     {
         CameraRay ray = CameraQueries.Ray(Descriptor, Aspect, point);
-        return layout.Pick(room, ray.Origin, ray.Direction);
+        return layout.Pick(board, ray.Origin, ray.Direction);
     }
 
     public void Dispose() => _camera.Dispose();
@@ -69,15 +68,14 @@ internal sealed class BoardCamera : IDisposable
     /// the view to centre them, back along its view far enough to have them all in front, and sizes the view
     /// to hold them. The Engine's own projection supplies the view axes, so the fit matches what is drawn.
     /// </summary>
-    private CameraDescriptor Fit(RoomState room, BoardLayout layout)
+    private CameraDescriptor Fit(BoardGrid grid, BoardLayout layout)
     {
-        BoardGrid grid = room.Room.Grid;
         CameraPose pose = new(new Vector3(grid.Width / 2f, 0, grid.Height / 2f), -_tuning.PitchDegrees, 0);
         // A unit view at aspect 1 projects a point to 0.5 plus its offset across and up the view.
         CameraDescriptor trial = Orthographic(pose, 1, Near + DepthMargin);
         double left = double.MaxValue, right = double.MinValue, bottom = double.MaxValue, top = double.MinValue;
         double nearest = double.MaxValue, farthest = double.MinValue;
-        foreach (CellBlock block in layout.Pickable(room))
+        foreach (CellBlock block in layout.Framing(grid))
         {
             foreach (Vector3 corner in Corners(block))
             {
