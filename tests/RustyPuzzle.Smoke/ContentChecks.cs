@@ -10,13 +10,13 @@ static class ContentChecks
         using (Harness puzzle = new(engine, shipped))
         {
             var board = puzzle.Observe();
-            Check((string?)board["room"] == "first-steps" && (int)board["width"]! == 8 && (int)board["height"]! == 8,
+            Check((string?)board["room"] == "first-steps" && (int)board["width"]! == 7 && (int)board["height"]! == 6,
                 "the first room of the authored order loads at its authored size");
             Check(board["rows"]!.AsArray().Select(row => (string?)row).SequenceEqual(
-                ["########", "#..#..E#", "#..#...#", "#......#", "#...#..#", "#...#..#", "#......#", "########"]),
+                ["#######", "#...EE#", "#...EE#", "#.....#", "#...#.#", "#######"]),
                 "party markers stand on the start terrain and the rest keep their symbols");
             Check(board["members"]!.AsArray().Select(m => $"{m!["id"]}@{m["column"]},{m["row"]}").SequenceEqual(
-                ["fighter@1,1", "ranger@1,3", "rogue@1,5", "mage@1,6"]), "each member starts on its marker");
+                ["fighter@1,1", "ranger@1,2", "rogue@1,3", "mage@1,4"]), "each member starts on its marker");
             Check((string?)puzzle.Hud()["room"] == "First Steps" && puzzle.Hud()["party"]!.AsArray().Count == 4,
                 "the projection names the room and lists the party");
         }

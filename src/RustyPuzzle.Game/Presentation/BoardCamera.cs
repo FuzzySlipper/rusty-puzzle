@@ -6,11 +6,15 @@ namespace RustyPuzzle.Game.Presentation;
 
 /// <summary>
 /// The board's one camera: orthographic, looking down the rows at the authored pitch, fitted so every
-/// block of the room fills the view up to the authored margin. It also turns a pointer position on the
-/// view into the cell drawn there.
+/// block of the room fills its view up to the authored margin. The view follows the UI element anchored
+/// under <see cref="ViewAnchor"/>, so the board stays clear of the interface panel. It also turns a pointer
+/// position on the canvas into the cell drawn there.
 /// </summary>
 internal sealed class BoardCamera : IDisposable
 {
+    /// <summary>The name the product UI anchors the board's view element under.</summary>
+    internal const string ViewAnchor = "board";
+
     // Before the page reports its surface, the camera frames a widescreen view.
     private const double FallbackAspect = 16.0 / 9;
     private const double Near = 0.1;
@@ -22,6 +26,8 @@ internal sealed class BoardCamera : IDisposable
     private readonly Camera _camera;
     private ulong? _surfaceRevision;
     private BoardGrid? _framed;
+    // Where the camera draws on the canvas, bottom-left normalized: the anchored element, or the whole canvas.
+    private CameraViewport _view = CameraViewports.Full;
 
     internal BoardCamera(IEngineContext engine, BoardViewTuning tuning)
     {
@@ -30,6 +36,7 @@ internal sealed class BoardCamera : IDisposable
         Descriptor = Orthographic(new CameraPose(Vector3.Zero, -tuning.PitchDegrees, 0), 1, Near + DepthMargin);
         _camera = engine.CameraView.CreateCamera(Descriptor);
         engine.CameraView.SetActiveCamera(_camera);
+        engine.CameraView.SetViewportAnchor(new CameraViewportAnchorRequest(_camera, ViewAnchor));
         engine.CameraView.SetBackgroundColor(new SetBackgroundColorRequest(tuning.Background));
     }
 
@@ -38,10 +45,12 @@ internal sealed class BoardCamera : IDisposable
     /// <summary>The width-to-height ratio of the view the camera was last fitted to.</summary>
     internal double Aspect { get; private set; } = FallbackAspect;
 
-    /// <summary>Refits the camera when the room's grid or the view's size changed since the last fit.</summary>
+    /// <summary>Refits the camera when the room's grid or the view's size or place changed since the last fit.</summary>
     internal void Frame(BoardGrid grid, BoardLayout layout)
     {
         CameraSurfaceReadout surface = _engine.CameraView.ReadSurface();
+        // The anchor's revision is the surface's, and changes with any layout change.
+        CameraViewportAnchorReadout anchor = _engine.CameraView.ReadViewportAnchor(new CameraViewportAnchorReadRequest(ViewAnchor));
         if (ReferenceEquals(grid, _framed) && _surfaceRevision == surface.Revision)
         {
             return;
@@ -49,15 +58,28 @@ internal sealed class BoardCamera : IDisposable
 
         _framed = grid;
         _surfaceRevision = surface.Revision;
-        Aspect = surface.Reported && surface.CssWidth > 0 && surface.CssHeight > 0 ? surface.CssWidth / surface.CssHeight : FallbackAspect;
+        bool anchored = anchor.Reported && anchor.Width > 0 && anchor.Height > 0;
+        _view = anchored ? new CameraViewport(anchor.X, anchor.Y, anchor.Width, anchor.Height) : CameraViewports.Full;
+        Aspect = surface.Reported && surface.CssWidth > 0 && surface.CssHeight > 0
+            ? _view.Width * surface.CssWidth / (_view.Height * surface.CssHeight)
+            : FallbackAspect;
         Descriptor = Fit(grid, layout);
         _engine.CameraView.UpdateCamera(new CameraUpdateRequest(_camera, Descriptor));
     }
 
-    /// <summary>The cell drawn at a pointer position (normalized, bottom-left origin), or null off the board.</summary>
+    /// <summary>
+    /// The cell drawn at a pointer position on the canvas (normalized, bottom-left origin), or null off the
+    /// board or outside the camera's view.
+    /// </summary>
     internal Cell? Pick(BoardState board, BoardLayout layout, Vector2 point)
     {
-        CameraRay ray = CameraQueries.Ray(Descriptor, Aspect, point);
+        Vector2 local = new((float)((point.X - _view.X) / _view.Width), (float)((point.Y - _view.Y) / _view.Height));
+        if (local.X is < 0 or > 1 || local.Y is < 0 or > 1)
+        {
+            return null;
+        }
+
+        CameraRay ray = CameraQueries.Ray(Descriptor, Aspect, local);
         return layout.Pick(board, ray.Origin, ray.Direction);
     }
 

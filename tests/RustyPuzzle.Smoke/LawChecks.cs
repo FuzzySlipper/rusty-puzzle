@@ -62,7 +62,7 @@ static class LawChecks
         Check(puzzle.Hud()["moves"]!.AsArray().Any(move => ((string?)move!["label"])!.Contains("the Fighter goes to column 2, row 2", StringComparison.Ordinal)),
             "the HUD states where the swapped ally goes");
 
-        BoardGrid grid = puzzle.Product.Room.Board.Grid;
+        BoardGrid grid = puzzle.Product.Session.Board.Grid;
         puzzle.PointAt(Harness.TopOf(puzzle.Product.View.Layout.Piece(grid, new Cell(4, 1))));
         var preview = puzzle.Product.Picture().Preview;
         Check(preview is not null && preview.Target == new Cell(4, 1) && preview.Effects.Count == 2,

@@ -1,49 +1,54 @@
 /**
  * DOM companion for the board. The Engine draws the board and owns the canvas,
  * input delivery and projection transport; this module shows the projected room,
- * selection and party, and sends back the commands the projection hands it. Every
- * word comes from the projection, and it keeps no board state of its own.
+ * selection, party, legal moves and controls, and sends back the commands the
+ * projection hands it. Every word and every command comes from the projection;
+ * it keeps no board state, action names or command fields of its own.
  */
 export function mountProductUi(root, context) {
   const panel = element('aside', { className: 'rusty-puzzle-hud' });
   panel.style.cssText = [
-    'position:absolute', 'top:12px', 'left:12px', 'max-width:240px', 'padding:12px 14px',
+    'position:absolute', 'top:12px', 'left:12px', 'width:250px', 'box-sizing:border-box', 'padding:12px 14px',
     'background:rgba(12,12,18,0.82)', 'color:#eceae4', 'font:14px/1.4 system-ui,sans-serif',
     'border-radius:8px',
   ].join(';');
+
+  // The Engine draws the board inside this element, beside the panel. It is not interactive, so
+  // presses on it reach the canvas.
+  const boardView = element('div', { className: 'rusty-puzzle-board' });
+  boardView.style.cssText = 'position:absolute;top:0;bottom:0;left:274px;right:0';
 
   const title = element('h1');
   title.style.cssText = 'font-size:16px;margin:0 0 8px';
   const facts = element('dl');
   facts.style.cssText = 'display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:0 0 8px';
-  const roomLabel = element('dt');
-  const room = element('dd');
-  const selectedLabel = element('dt');
-  const selected = element('dd');
-  const lawLabel = element('dt');
-  const law = element('dd');
-  for (const value of [room, selected, law]) value.style.margin = '0';
-  facts.append(roomLabel, room, selectedLabel, selected, lawLabel, law);
+  const fact = () => {
+    const label = element('dt');
+    const value = element('dd');
+    value.style.margin = '0';
+    facts.append(label, value);
+    return { label, value };
+  };
+  const roomFact = fact();
+  const moveCountFact = fact();
+  const selectedFact = fact();
+  const lawFact = fact();
+
+  const controls = element('div');
+  controls.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px';
 
   const status = element('p', { id: 'rusty-puzzle-status' });
   status.setAttribute('role', 'status');
   status.setAttribute('aria-live', 'polite');
   status.style.margin = '0 0 8px';
 
-  const partyHeading = element('h2', { id: 'rusty-puzzle-party' });
-  partyHeading.style.cssText = 'font-size:14px;margin:0 0 4px';
-  const party = element('ul');
-  party.setAttribute('aria-labelledby', partyHeading.id);
-  party.style.cssText = 'list-style:none;margin:0;padding:0;display:grid;gap:4px';
+  const [partyHeading, party] = section('rusty-puzzle-party');
+  const [movesHeading, moves] = section('rusty-puzzle-moves');
 
-  const movesHeading = element('h2', { id: 'rusty-puzzle-moves' });
-  movesHeading.style.cssText = 'font-size:14px;margin:8px 0 4px';
-  const moves = element('ul');
-  moves.setAttribute('aria-labelledby', movesHeading.id);
-  moves.style.cssText = 'margin:0;padding-left:18px';
-
-  panel.append(title, facts, status, partyHeading, party, movesHeading, moves);
-  root.append(panel);
+  panel.append(title, facts, controls, status, partyHeading, party, movesHeading, moves);
+  root.append(boardView, panel);
+  let anchored = null;
+  let releaseAnchor = () => {};
 
   let intent = null;
   const send = (command) => {
@@ -53,32 +58,39 @@ export function mountProductUi(root, context) {
 
   const show = (value) => {
     intent = value.intent;
+    if (value.view.anchor !== anchored) {
+      releaseAnchor();
+      anchored = value.view.anchor;
+      releaseAnchor = context?.viewport?.anchor?.(anchored, boardView) ?? (() => {});
+    }
     title.textContent = value.title;
-    roomLabel.textContent = value.labels.room;
-    room.textContent = value.room;
-    selectedLabel.textContent = value.labels.selected;
-    selected.textContent = value.selected;
+    setFact(roomFact, value.labels.room, value.room);
+    setFact(moveCountFact, value.labels.moveCount, String(value.moveCount));
+    setFact(selectedFact, value.labels.selected, value.selected);
     // The law row shows only while a member is selected.
-    lawLabel.hidden = law.hidden = value.law === null || value.law === undefined;
-    lawLabel.textContent = value.labels.law;
-    law.textContent = value.law ?? '';
+    setFact(lawFact, value.labels.law, value.law ?? null);
     status.textContent = value.status;
+
+    controls.replaceChildren(...value.controls.map((control) => {
+      const button = commandButton(control.label, control.command, send, false);
+      button.disabled = !control.enabled;
+      if (button.disabled) button.style.opacity = '0.45';
+      button.dataset.rustyPuzzleControl = control.id;
+      return button;
+    }));
+
     partyHeading.textContent = value.labels.party;
     party.replaceChildren(...value.party.map((member) => {
-      const button = element('button', { type: 'button', textContent: `${member.mark} · ${member.place}` });
+      const button = commandButton(`${member.mark} · ${member.place}`, member.command, send, member.selected);
       button.setAttribute('aria-label', member.label);
       button.setAttribute('aria-pressed', String(member.selected));
       button.dataset.rustyPuzzleMember = member.id;
-      button.style.cssText = 'width:100%;text-align:left;padding:4px 8px;font:inherit;border-radius:4px;'
-        + `border:1px solid ${member.selected ? '#ffd84d' : '#555'};background:${member.selected ? '#3a3420' : '#22222a'};color:inherit`;
-      button.addEventListener('click', () => send(member.command));
-      const item = element('li');
-      item.append(button);
-      return item;
+      return listItem(button);
     }));
+
     movesHeading.hidden = moves.hidden = value.moves.length === 0;
     movesHeading.textContent = value.labels.moves;
-    moves.replaceChildren(...value.moves.map((move) => element('li', { textContent: move.label })));
+    moves.replaceChildren(...value.moves.map((move) => listItem(commandButton(move.label, move.command, send, false))));
   };
 
   const unsubscribe = context?.projection?.subscribe?.((envelope) => {
@@ -88,9 +100,41 @@ export function mountProductUi(root, context) {
   return Object.freeze({
     dispose: () => {
       unsubscribe?.();
+      releaseAnchor();
+      boardView.remove();
       panel.remove();
     },
   });
+}
+
+function section(id) {
+  const heading = element('h2', { id });
+  heading.style.cssText = 'font-size:14px;margin:8px 0 4px';
+  const list = element('ul');
+  list.setAttribute('aria-labelledby', id);
+  list.style.cssText = 'list-style:none;margin:0;padding:0;display:grid;gap:4px';
+  return [heading, list];
+}
+
+function setFact({ label, value }, labelText, valueText) {
+  label.hidden = value.hidden = valueText === null;
+  label.textContent = labelText;
+  value.textContent = valueText ?? '';
+}
+
+function commandButton(text, command, send, highlighted) {
+  const button = element('button', { type: 'button', textContent: text });
+  button.style.cssText = 'text-align:left;padding:4px 8px;font:inherit;border-radius:4px;color:inherit;'
+    + `border:1px solid ${highlighted ? '#ffd84d' : '#555'};background:${highlighted ? '#3a3420' : '#22222a'}`;
+  button.addEventListener('click', () => send(command));
+  return button;
+}
+
+function listItem(child) {
+  const item = element('li');
+  child.style.width = '100%';
+  item.append(child);
+  return item;
 }
 
 function element(tag, properties = {}) {

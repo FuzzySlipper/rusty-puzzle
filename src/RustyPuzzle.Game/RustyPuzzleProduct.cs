@@ -5,14 +5,14 @@ using RustyPuzzle.Game.Board;
 using RustyPuzzle.Game.Content;
 using RustyPuzzle.Game.Interface;
 using RustyPuzzle.Game.Presentation;
-using RustyPuzzle.Game.Rooms;
+using RustyPuzzle.Game.Session;
 
 namespace RustyPuzzle.Game;
 
 /// <summary>
-/// The Engine product: loads the authored content domains, plays the first room of the authored order, turns
-/// admitted pointer presses and interface commands into board selections, and publishes the board view and
-/// the interface projection. Restart reloads the content, so edited content bundles show without a rebuild.
+/// The Engine product: loads the authored content domains, plays the authored rooms through the session,
+/// turns admitted pointer presses and interface commands into session commands, and publishes the board view
+/// and the interface projection. Restart reloads the content, so edited content bundles show without a rebuild.
 /// </summary>
 public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSource
 {
@@ -41,7 +41,7 @@ public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSour
             _content = PuzzleContent.Load(authored);
             _hud = new PuzzleHud(_engine.Ui);
             _view = new BoardView(_engine, _content.View);
-            Room = new RoomState(_content.Rooms[0]);
+            Session = new PuzzleSession(_content.Rooms);
         }
         catch
         {
@@ -50,7 +50,7 @@ public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSour
         }
     }
 
-    internal RoomState Room { get; private set; }
+    internal PuzzleSession Session { get; private set; }
 
     internal BoardView View => _view;
 
@@ -81,8 +81,8 @@ public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSour
     }
 
     /// <summary>
-    /// Reloads every content domain and returns to the first room's authored start. Content that fails to
-    /// load leaves the current room, view and content in place and faults with the file named.
+    /// Reloads every content domain and starts a new session at the first room's authored start. Content that
+    /// fails to load leaves the current session, view and content in place and faults with the file named.
     /// </summary>
     public void Restart()
     {
@@ -92,7 +92,7 @@ public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSour
         _view.Dispose();
         _view = view;
         _content = content;
-        Room = new RoomState(content.Rooms[0]);
+        Session = new PuzzleSession(content.Rooms);
         _pointed = null;
         Publish();
     }
@@ -120,23 +120,21 @@ public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSour
         registrar.Register(commands);
     }
 
-    /// <summary>Selects the cell drawn at a pointer position (normalized, bottom-left origin); off the board clears.</summary>
-    internal void PickAt(Vector2 point) => Room.Select(_view.Pick(Room.Board, point));
+    /// <summary>A primary press at a pointer position (normalized, bottom-left origin), as the session reads presses.</summary>
+    internal Receipt PressAt(Vector2 point) => Session.Press(_view.Pick(Session.Board, point));
 
     /// <summary>Notes the cell under a free pointer, whose legal move (if any) the board previews.</summary>
-    internal void PointAt(Vector2 point) => _pointed = _view.Pick(Room.Board, point);
+    internal void PointAt(Vector2 point) => _pointed = _view.Pick(Session.Board, point);
 
     /// <summary>What the board view shows now.</summary>
     internal BoardPicture Picture() =>
-        new(Room.Board, Room.Selected, Room.Moves, Room.Moves.FirstOrDefault(move => move.Target == _pointed));
-
-    internal bool Apply(PuzzleCommand command) => command.ApplyTo(Room);
+        new(Session.Board, Session.Selected, Session.Moves, Session.Moves.FirstOrDefault(move => move.Target == _pointed));
 
     /// <summary>Shows the current room state in the board view and the interface.</summary>
     internal void Publish()
     {
         _view.Publish(Picture());
-        _hud.Publish(Room, _content.Hud);
+        _hud.Publish(Session, _content.Hud);
     }
 
     private void Apply(ReadOnlySpan<ProductInputEvent> input)
@@ -145,15 +143,15 @@ public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSour
         {
             if (item is { Kind: InputEventKind.PointerButton, PointerButton: PointerButton.Primary, Edge: InputEdge.Pressed, HasPosition: true })
             {
-                PickAt(new Vector2(item.X, item.Y));
+                PressAt(new Vector2(item.X, item.Y));
             }
             else if (item.Kind == InputEventKind.PointerPosition)
             {
                 PointAt(new Vector2(item.X, item.Y));
             }
-            else if (PuzzleCommand.From(item) is PuzzleCommand command)
+            else if (CommandPayload.From(item) is PuzzleCommand command)
             {
-                Apply(command);
+                Session.Submit(command);
             }
         }
     }

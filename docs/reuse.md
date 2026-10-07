@@ -95,7 +95,12 @@ Consulted for direction only, with nothing copied: `rusty-rifles`
 `70c9cee3473bff9672ec4d4080baa7ad78960d71` `Dungeon/MovementGrid.cs`
 (occupancy with an admit predicate; its crowd and reservation model does not
 fit a turn-based board), `rusty-crawler` `8c3996e…` `src/PartyRpg.Kit/Party/PartyRoster.cs` (selected
-member), `rusty-goldbox` `418d151…` `src/ui/panels/controls.js` (projected move list); `rusty-d20`
+member), `rusty-goldbox` `418d151…` `src/ui/panels/controls.js` (projected move list),
+`rusty-roguelike` `faa5586dbe34555eecd705f299f97dd5f5831553`
+`src/RustyRoguelike.Product/Session/GameSession.cs` (commands with an expected
+revision, execute on a candidate, adopt, receipt; here the immutable board
+makes the candidate a plain new state), `rusty-goldbox` `418d151…`
+`src/RustyGoldbox.Game/Presentation/SceneView.cs` (camera viewport anchored to a UI element); `rusty-d20`
 `047934240040ac889ac787239bfec5f9fa8c7a2a` `RustyD20Product.cs`
 (`TacticalCamera`, an orthographic overhead camera), `rusty-crawler`
 `8c3996ea4cff5002f02cd04dc10287a1aca30260` `ProductPlaytest.cs`

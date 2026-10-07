@@ -142,7 +142,7 @@ Make an aggressively plain, functional prototype. Gray squares and lettered circ
 
 - An approximately 8×8 board.
 - Four characters.
-- One simple objective: get **all characters** to an exit.
+- One simple objective: get **all characters** to an exit. Settled for the prototype: the exit is a zone, and a room is solved when the whole party stands on exit cells at the same time. Nobody leaves early, because a member who left could no longer block, be vaulted over or be swapped with, and the mage, who only moves by swapping, could never escape.
 - Around fifteen handcrafted puzzles.
 - No lore, inventory, town, crafting, romance system, skill trees, equipment, or procedural generation.
 - No conventional combat system yet.

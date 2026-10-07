@@ -3,6 +3,7 @@
   "roomLabel": "Room",
   "selectedLabel": "Selected",
   "lawLabel": "Moves by",
+  "moveCountLabel": "Moves made",
   "partyHeading": "Party",
   "movesHeading": "Legal moves",
   "nobodySelected": "Nobody",
@@ -10,8 +11,24 @@
   "cellSelected": "Selected the {terrain} at column {column}, row {row}.",
   "memberSelected": "Selected the {member} on the {terrain} at column {column}, row {row}.",
   "noMoves": "The {member} has no legal move from here.",
+  "solved": "The whole party stands on the exit: room solved in {count} moves.",
+  "solvedNext": "Go on to the next room, or undo or reset to play this one again.",
+  "solvedLast": "That was the last room. Undo or reset to play it again.",
   "memberPlace": "{member}, column {column}, row {row}",
   "selectMember": "Select the {member}",
   "moveTo": "Move to column {column}, row {row}",
-  "alsoMoves": "{move}; the {member} goes to column {column}, row {row}"
+  "alsoMoves": "{move}; the {member} goes to column {column}, row {row}",
+  "undo": "Undo",
+  "reset": "Reset room",
+  "nextRoom": "Next room",
+  "refusals": {
+    "incomplete": "That command was missing something it needs.",
+    "stale-revision": "The board changed before that command arrived; nothing was done.",
+    "off-board": "That cell is not on the board.",
+    "no-such-member": "That party member is not on this board.",
+    "illegal-move": "That member's law does not allow that move.",
+    "room-solved": "The room is already solved. Undo or reset to keep playing it.",
+    "nothing-to-undo": "There is nothing to undo.",
+    "no-such-room": "There is no such room."
+  }
 }

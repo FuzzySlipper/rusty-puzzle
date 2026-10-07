@@ -99,6 +99,10 @@ internal sealed record Room(string Id, string Name, BoardGrid Grid, IReadOnlyLis
 
         Authored.Require(starts.Count == markers.Count, path, "party",
             $"marks {markers.Count} member(s) but the rows place {starts.Count}.");
+        // The room is solved when the whole party stands on exit cells at once.
+        int exits = cells.Count(cell => cell.Exit);
+        Authored.Require(exits >= starts.Count, path, "rows",
+            $"has {exits} exit cell(s) for a party of {starts.Count}; the whole party must fit on the exits.");
         return new Room(id, definition.Name, new BoardGrid(width, definition.Rows.Length, cells), starts);
     }
 }

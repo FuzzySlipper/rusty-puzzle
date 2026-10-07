@@ -8,9 +8,10 @@ choosing, sequencing and combining those rules. Read the
 Rusty product. Tasks and implementation progress live in Den project
 `rusty-puzzle`.
 
-C# loads the authored rooms, terrain and party from `content/`, draws the
-board in the Engine as placeholder primitives under a fitted overhead camera,
-and turns pointer presses and interface commands into board selections. The
+C# loads the authored rooms, terrain, movement laws and party from
+`content/`, draws the board in the Engine as placeholder primitives under a
+fitted overhead camera, and plays it through one session: selection, legal
+moves from each member's law, undo, reset and the exit-zone win. The
 DOM companion shows the projected room, selection and party. The packaged
 Engine owns the host, input, update admission, renderer and browser shell.
 
@@ -39,8 +40,11 @@ rusty install
 rusty dev --port 8787
 ```
 
-Open the URL printed by the host. The first room of the authored order opens;
-click a board cell or a party member to select it.
+Open the URL printed by the host. The first room of the authored order opens.
+Select a party member (on the board or in the panel), then click a highlighted
+cell to move it; point at a highlighted cell to preview the move. Undo and
+Reset are in the panel. The room is solved when the whole party stands on the
+exit.
 `rusty dev` runs the pinned pair's runtime: CoreCLR loads the product, and
 changes to declared C#, UI, or content inputs rebuild and reload it. See
 `rusty dev --help` for `--bind-host`, `--live-debug`, and `--debugger`.

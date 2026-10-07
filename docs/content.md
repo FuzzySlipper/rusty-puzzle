@@ -18,7 +18,7 @@ own ID. Colours are linear `[r, g, b]` with components from 0 to 1.
 | `party/<id>.json` | One party member: `name`, `law` (a law ID), `look.colour`, `look.mark` (one or two letters for lists) | `Party/PartyMember.cs` |
 | `rooms/<id>.json` | One room: `name`, `rows`, `party`, `startTerrain` (below) | `Rooms/Room.cs` |
 | `campaign/rooms.json` | `order`: room IDs in play order; the first opens at start | `Rooms/Room.cs` (`RoomOrder`) |
-| `interface/<screen>.json` | One interface screen's words and templates; `hud.json` is the board HUD | `Interface/HudText.cs` |
+| `interface/<screen>.json` | One interface screen's words and templates; `hud.json` is the board HUD, including `refusals`, one sentence per session refusal keyed by its kebab-case name (all required, no extras) | `Interface/HudText.cs` |
 | `tuning/board-view.json` | Camera pitch and fill, cell gap, piece size, selection and destination markers, move preview tokens, background | `Presentation/BoardViewTuning.cs` |
 
 Keep a reusable definition (a terrain kind, a party member) in its own file
@@ -47,7 +47,9 @@ of its own.
 character is a terrain kind's `symbol` or a party marker. `party` maps each
 marker character to a party member ID; that member starts there, standing on
 the `startTerrain` kind, which must be passable. A marker must not also be a
-terrain symbol, and each marker appears exactly once.
+terrain symbol, and each marker appears exactly once. The room is solved when
+the whole party stands on exit cells at once, so a room needs at least as many
+exit cells as party members.
 
 ```json
 {
@@ -80,8 +82,8 @@ When two parts of a law reach the same cell, the earlier part decides it.
 
 ## Interface text
 
-Templates name their values in braces: `{member}`, `{terrain}`, `{column}`
-and `{row}`; `alsoMoves` also takes `{move}`, the move's words so far, once per
+Templates name their values in braces: `{member}`, `{terrain}`, `{column}`,
+`{row}` and `{count}`; `alsoMoves` also takes `{move}`, the move's words so far, once per
 other member the move relocates. Columns and rows are shown counting from one. C# fills templates;
 it never authors the words.
 

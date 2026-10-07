@@ -1,29 +1,18 @@
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Rusty.Engine;
-using RustyPuzzle.Game.Board;
-using RustyPuzzle.Game.Content;
-using RustyPuzzle.Game.Rooms;
+using RustyPuzzle.Game.Session;
 
 namespace RustyPuzzle.Game.Interface;
 
-/// <summary>What a <see cref="PuzzleCommand"/> asks for.</summary>
-[JsonConverter(typeof(KebabCase<PuzzleAction>))]
-internal enum PuzzleAction
-{
-    /// <summary>Select the cell at <see cref="PuzzleCommand.Column"/>, <see cref="PuzzleCommand.Row"/>.</summary>
-    Select,
-
-    /// <summary>Clear the selection.</summary>
-    Clear,
-}
-
 /// <summary>
-/// One <c>puzzle.command.v1</c> payload from the interface: <c>{"action": ..., fields}</c>. The interface
-/// sends the commands the projection hands it, so the actions and their fields are declared only here.
+/// The wire form of session commands: the <c>puzzle.command</c> payload intent carries one
+/// <see cref="PuzzleCommand"/> as JSON. The projection hands the DOM each command ready to send, so the DOM
+/// never spells an action or a field.
 /// </summary>
-internal sealed record PuzzleCommand(PuzzleAction Action, int? Column = null, int? Row = null)
+internal static class CommandPayload
 {
     /// <summary>The payload intent and contract, as the product project declares them.</summary>
     internal const string Intent = "puzzle.command";
@@ -31,17 +20,7 @@ internal sealed record PuzzleCommand(PuzzleAction Action, int? Column = null, in
     private static readonly byte[] IntentBytes = Encoding.UTF8.GetBytes(Intent);
     private static readonly byte[] ContractBytes = Encoding.UTF8.GetBytes(Contract);
 
-    internal static PuzzleCommand Select(int column, int row) => new(PuzzleAction.Select, column, row);
-
-    /// <summary>Applies the command to the room; false when the room refuses it.</summary>
-    internal bool ApplyTo(RoomState room) => Action switch
-    {
-        PuzzleAction.Select => Column is int column && Row is int row && room.Select(new Cell(column, row)),
-        PuzzleAction.Clear => room.Select(null),
-        _ => throw new InvalidOperationException($"{Contract}: unknown action {Action}."),
-    };
-
-    /// <summary>The command a UI claim carries, or null for any other input.</summary>
+    /// <summary>The command a UI claim carries, or null for any other input. A malformed payload is a first-party defect.</summary>
     internal static PuzzleCommand? From(in ProductInputEvent input)
     {
         if (input.ValueKind != InputValueKind.ProductPayload
@@ -61,6 +40,8 @@ internal sealed record PuzzleCommand(PuzzleAction Action, int? Column = null, in
             throw new InvalidOperationException($"{Contract}: {error.Message}", error);
         }
     }
+
+    internal static JsonNode ToJson(PuzzleCommand command) => JsonSerializer.SerializeToNode(command, InterfaceJson.Default.PuzzleCommand)!;
 }
 
 // Missing constructor values, nulls in non-nullable fields and unknown members are errors, not defaults.

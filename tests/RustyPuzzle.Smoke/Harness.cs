@@ -42,6 +42,27 @@ sealed class Harness : IDisposable
 
     internal JsonObject Hud() => Product.Hud.Current!;
 
+    /// <summary>Where each member stands, as "id@column,row" in authored order.</summary>
+    internal string[] Members() =>
+        [.. Observe()["members"]!.AsArray().Select(m => $"{m!["id"]}@{m["column"]},{m["row"]}")];
+
+    internal ulong Revision() => (ulong)Observe()["revision"]!;
+
+    /// <summary>Sends a command as the interface does.</summary>
+    internal void Send(string json) => Advance(Claim(json));
+
+    /// <summary>Sends the command the projection hands one of its controls ("undo", "reset", "next-room").</summary>
+    internal void Control(string id) =>
+        Send(Hud()["controls"]!.AsArray().Single(control => (string?)control!["id"] == id)!["command"]!.ToJsonString());
+
+    /// <summary>Selects a member's cell, then sends the projected command of its legal move to the target, as the DOM does.</summary>
+    internal void MoveVia(int column, int row, int targetColumn, int targetRow)
+    {
+        Send($"{{\"action\":\"select\",\"column\":{column},\"row\":{row}}}");
+        Send(Hud()["moves"]!.AsArray().Single(move => (int)move!["command"]!["column"]! == targetColumn
+            && (int)move["command"]!["row"]! == targetRow)!["command"]!.ToJsonString());
+    }
+
     /// <summary>The selected cell and the member on it, or null.</summary>
     internal (int Column, int Row, string? Member)? Selected()
     {
@@ -77,8 +98,8 @@ sealed class Harness : IDisposable
         Kind = InputEventKind.DirectProductPayload,
         ValueKind = InputValueKind.ProductPayload,
         Provenance = InputProvenance.DirectUi,
-        Intent = Encoding.UTF8.GetBytes(PuzzleCommand.Intent),
-        PayloadContract = Encoding.UTF8.GetBytes(PuzzleCommand.Contract),
+        Intent = Encoding.UTF8.GetBytes(CommandPayload.Intent),
+        PayloadContract = Encoding.UTF8.GetBytes(CommandPayload.Contract),
         PayloadData = Encoding.UTF8.GetBytes(json),
     };
 
