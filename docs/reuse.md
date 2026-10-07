@@ -108,6 +108,10 @@ makes the candidate a plain new state), `rusty-goldbox` `418d151…`
 `8c3996ea4cff5002f02cd04dc10287a1aca30260` `ProductPlaytest.cs`
 (`PlaytestDebugModule` wiring) and `rusty-dungeon`
 `fb8c6ec8a9662035082c389dc43ef27d9e93f2b8` `LevelShaping.cs` (ASCII room rows).
+`rusty-rifles` `70c9cee…` `docs/art-direction.md` and `docs/art/prompts/README.md`
+(the recipe shape: shared style, one treatment, one asset contract, one
+subject; recipes in git, attempts in Den) shaped `docs/art/prompts/`; its
+wording, style and subjects were not used.
 The camera fit (measuring block corners through `CameraQueries.Project` and
 recentring along `CameraQueries.Ray`), block picking with the board-plane
 fallback, the room format and every content value are original here. No donor

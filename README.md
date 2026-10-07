@@ -100,6 +100,7 @@ dotnet run --project tests/RustyPuzzle.Smoke
 | `.den-serve.json` | Playtest host configuration for the Den playtest service |
 | `docs/ui.md` | DOM companion contract |
 | `docs/content.md` | Content layout and authoring formats |
+| `docs/art-direction.md`, `docs/art/prompts/` | Art direction, readability rules and image prompt recipes |
 | `docs/agent-review/` | Reusable review workflow and lane packets |
 
 The SDK generates the product's bind entry point inside its ordinary build;
