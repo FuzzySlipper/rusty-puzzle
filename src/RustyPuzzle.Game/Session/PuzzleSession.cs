@@ -11,8 +11,9 @@ internal sealed record Turn(Room Room, BoardState Board, int MoveCount);
 /// <summary>
 /// The one owner of play: which room, the history of adopted boards, the selection and the commands that
 /// change them. A move is resolved to its effects, applied to a new board (the current one is never
-/// touched) and adopted onto the history; undo steps back through the history, and reset and room changes are
-/// adopted like moves, so undo takes them back too. Nothing costs anything and the history is unbounded.
+/// touched) and adopted onto the history; undo steps back through the history, and a reset is adopted like a
+/// move, so undo takes it back too. Choosing a room starts that room's own history. Nothing costs anything and
+/// the history is unbounded.
 /// </summary>
 internal sealed class PuzzleSession
 {
@@ -84,7 +85,8 @@ internal sealed class PuzzleSession
 
     private Refusal? Execute(PuzzleCommand command)
     {
-        if (command.Action is not (PuzzleAction.Select or PuzzleAction.Clear) && command.Revision != Revision)
+        // Selection and choosing a room change no board the requester was looking at, so they carry no revision.
+        if (command.Action is not (PuzzleAction.Select or PuzzleAction.Clear or PuzzleAction.Room) && command.Revision != Revision)
         {
             return command.Revision is null ? Refusal.Incomplete : Refusal.StaleRevision;
         }
@@ -171,7 +173,9 @@ internal sealed class PuzzleSession
             return Refusal.NoSuchRoom;
         }
 
-        Adopt(Start(room));
+        _history.Clear();
+        _history.Add(Start(room));
+        Revision++;
         _selected = null;
         return null;
     }

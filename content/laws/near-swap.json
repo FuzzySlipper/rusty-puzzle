@@ -1,5 +1,5 @@
 {
-  "rule": "Trades places with a party member up to three squares away in any direction.",
+  "rule": "Trades places with a party member up to three squares away, counting a diagonal square as one.",
   "moves": [
     { "kind": "swap", "distance": { "min": 1, "max": 3 }, "measure": "chebyshev" }
   ]

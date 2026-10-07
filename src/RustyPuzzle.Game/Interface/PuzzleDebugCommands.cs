@@ -26,14 +26,14 @@ internal sealed class PuzzleDebugCommands(RustyPuzzleProduct product) : IDebugCo
     [DebugCommand("puzzle.clear", Description = "Clear the selection, as the interface's clear command does.")]
     public DebugCommandResult Clear() => Submitted(product.Session.Submit(new PuzzleCommand(PuzzleAction.Clear)));
 
-    [DebugCommand("puzzle.undo", Description = "Take back the last move, reset or room change, as the Undo control does.")]
+    [DebugCommand("puzzle.undo", Description = "Take back the last move or reset in this room, as the Undo control does.")]
     public DebugCommandResult Undo() => Submitted(product.Session.Submit(PuzzleCommand.Undo(product.Session.Revision)));
 
     [DebugCommand("puzzle.reset", Description = "Return the room to its authored start, as the Reset control does; undo brings the board back.")]
     public DebugCommandResult Reset() => Submitted(product.Session.Submit(PuzzleCommand.Reset(product.Session.Revision)));
 
     [DebugCommand("puzzle.room", Description = "Play a room of the authored order from its start, by room ID.")]
-    public DebugCommandResult Room(string id) => Submitted(product.Session.Submit(PuzzleCommand.ChooseRoom(id, product.Session.Revision)));
+    public DebugCommandResult Room(string id) => Submitted(product.Session.Submit(PuzzleCommand.ChooseRoom(id)));
 
     [DebugCommand("puzzle.pick", Description = "Press the primary pointer at a view position (0 to 1, bottom-left origin) through the board's picking path.")]
     public DebugCommandResult Pick(float x, float y) => float.IsFinite(x) && float.IsFinite(y)

@@ -51,7 +51,7 @@ internal static class HudProjection
             {
                 ["label"] = Template.Fill(text.RoomOption, ("number", (index + 1).ToString(CultureInfo.InvariantCulture)), ("room", room.Name)),
                 ["current"] = room == session.Room,
-                ["command"] = CommandPayload.ToJson(PuzzleCommand.ChooseRoom(room.Id, session.Revision)),
+                ["command"] = CommandPayload.ToJson(PuzzleCommand.ChooseRoom(room.Id)),
             });
         }
 
@@ -62,7 +62,7 @@ internal static class HudProjection
         ];
         if (session.Solved && session.NextRoom is { } next)
         {
-            controls.Add(Control("next-room", text.NextRoom, PuzzleCommand.ChooseRoom(next.Id, session.Revision), true));
+            controls.Add(Control("next-room", text.NextRoom, PuzzleCommand.ChooseRoom(next.Id), true));
         }
 
         return new JsonObject

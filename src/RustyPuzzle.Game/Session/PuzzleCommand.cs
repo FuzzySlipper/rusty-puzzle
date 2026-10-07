@@ -16,19 +16,19 @@ internal enum PuzzleAction
     /// <summary><see cref="PuzzleCommand.Member"/> makes its legal move to the target cell.</summary>
     Move,
 
-    /// <summary>Take back the last move, reset or room change.</summary>
+    /// <summary>Take back the last move or reset in this room.</summary>
     Undo,
 
     /// <summary>Return the room to its authored start; undo brings the board back.</summary>
     Reset,
 
-    /// <summary>Play <see cref="PuzzleCommand.Room"/> from its start.</summary>
+    /// <summary>Play <see cref="PuzzleCommand.Room"/> from its start, with a history of its own.</summary>
     Room,
 }
 
 /// <summary>
 /// One request to the session, as the interface and the pointer make it: <c>{"action": ..., fields}</c>.
-/// Board-changing actions carry the <see cref="Revision"/> the requester saw, so a request made against an
+/// Moves, undo and reset carry the <see cref="Revision"/> the requester saw, so a request made against an
 /// older board is refused rather than applied to a board nobody looked at.
 /// </summary>
 internal sealed record PuzzleCommand(PuzzleAction Action, int? Column = null, int? Row = null, string? Member = null,
@@ -43,5 +43,5 @@ internal sealed record PuzzleCommand(PuzzleAction Action, int? Column = null, in
 
     internal static PuzzleCommand Reset(ulong revision) => new(PuzzleAction.Reset, Revision: revision);
 
-    internal static PuzzleCommand ChooseRoom(string room, ulong revision) => new(PuzzleAction.Room, Room: room, Revision: revision);
+    internal static PuzzleCommand ChooseRoom(string room) => new(PuzzleAction.Room, Room: room);
 }

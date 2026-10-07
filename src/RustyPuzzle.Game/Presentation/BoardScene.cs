@@ -8,7 +8,7 @@ namespace RustyPuzzle.Game.Presentation;
 
 /// <summary>
 /// Draws a <see cref="BoardPicture"/> in the Engine as placeholder primitives: a block per cell in its terrain
-/// kind's colour, a ball per party member in the member's colour, a marker over the selected cell and over each
+/// kind's colour (every other cell shaded, as a checkerboard), a ball per party member in the member's colour, a marker over the selected cell and over each
 /// legal move's target, and a small token in each member's colour where the previewed move would put them.
 /// Cells of one kind share an appearance. The scene republishes only when the picture changed.
 /// </summary>
@@ -50,8 +50,7 @@ internal sealed class BoardScene : IDisposable
         ulong id = TerrainObjects;
         foreach (Cell cell in grid.Cells())
         {
-            TerrainKind kind = grid.TerrainAt(cell);
-            facts.Add(Fact(id++, Appearance(_terrain, kind.Id, kind.Colour, PrimitiveGeometry.Cube), _layout.Terrain(grid, cell)));
+            facts.Add(Fact(id++, Terrain(grid.TerrainAt(cell), cell), _layout.Terrain(grid, cell)));
         }
 
         id = PieceObjects;
@@ -95,6 +94,19 @@ internal sealed class BoardScene : IDisposable
 
         _selection.Dispose();
         _destination.Dispose();
+    }
+
+    /// <summary>A cell's terrain block: every other cell is shaded so the checkerboard the laws keep to shows.</summary>
+    private Appearance Terrain(TerrainKind kind, Cell cell)
+    {
+        if ((cell.Column + cell.Row) % 2 == 0)
+        {
+            return Appearance(_terrain, kind.Id, kind.Colour, PrimitiveGeometry.Cube);
+        }
+
+        float shade = _tuning.CheckerShade;
+        return Appearance(_terrain, $"{kind.Id}:shaded", new Color(kind.Colour.R * shade, kind.Colour.G * shade, kind.Colour.B * shade, kind.Colour.A),
+            PrimitiveGeometry.Cube);
     }
 
     private Appearance Piece(PartyMember member) => Appearance(_pieces, member.Id, member.Colour, PrimitiveGeometry.Sphere);

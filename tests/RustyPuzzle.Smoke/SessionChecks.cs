@@ -30,6 +30,12 @@ static class SessionChecks
         }
 
         Check(reachedAll && order.Length == puzzle.Hud()["rooms"]!.AsArray().Count, "the room picker's projected commands reach every room of the authored order");
+
+        // Picker commands made from one projection all apply: choosing rooms quickly is not refused as stale.
+        var stale = puzzle.Hud()["rooms"]!.AsArray();
+        puzzle.Send(stale[1]!["command"]!.ToJsonString());
+        puzzle.Send(stale[2]!["command"]!.ToJsonString());
+        Check((string?)puzzle.Observe()["room"] == order[2], "rooms chosen in quick succession are all applied");
     }
 
     private static void UndoEachLaw(IEngineContext engine)
@@ -101,8 +107,7 @@ static class SessionChecks
         puzzle.Control("next-room");
         Check((string?)puzzle.Observe()["room"] == "first-steps" && (int)puzzle.Hud()["moveCount"]! == 0 && !(bool)puzzle.Hud()["solved"]!,
             "the next-room control starts the next room of the authored order");
-        puzzle.Control("undo");
-        Check((string?)puzzle.Observe()["room"] == "check" && (bool)puzzle.Hud()["solved"]!, "undo returns to the solved room");
+        Check(!Enabled(puzzle, "undo"), "a chosen room starts its own history, so undo has nothing to take back");
 
         using PackedContent last = PackedContent.WithRoom(["#####", "#1E.#", "#####"], new() { ['1'] = "fighter" });
         using Harness only = new(engine, last);
@@ -134,7 +139,7 @@ static class SessionChecks
             "a move made against another revision");
         Refused("{\"action\":\"move\",\"member\":\"fighter\",\"column\":1,\"row\":2}", "Incomplete", "a move without a revision");
         Refused($"{{\"action\":\"undo\",\"revision\":{revision}}}", "NothingToUndo", "undo at the start");
-        Refused($"{{\"action\":\"room\",\"room\":\"nowhere\",\"revision\":{revision}}}", "NoSuchRoom", "an unknown room");
+        Refused("{\"action\":\"room\",\"room\":\"nowhere\"}", "NoSuchRoom", "an unknown room");
 
         puzzle.MoveVia(2, 2, 1, 2);
         JsonNode? stale = JsonNode.Parse($"{{\"action\":\"undo\",\"revision\":{revision}}}");
