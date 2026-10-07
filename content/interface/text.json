@@ -1,0 +1,12 @@
+{
+  "title": "Rusty Puzzle",
+  "roomLabel": "Room",
+  "selectedLabel": "Selected",
+  "partyHeading": "Party",
+  "nobodySelected": "Nobody",
+  "nothingSelected": "Nothing is selected. Click a board cell or choose a party member.",
+  "cellSelected": "Selected the {terrain} at column {column}, row {row}.",
+  "memberSelected": "Selected the {member} on the {terrain} at column {column}, row {row}.",
+  "memberPlace": "{member}, column {column}, row {row}",
+  "selectMember": "Select the {member}"
+}

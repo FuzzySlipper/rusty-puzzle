@@ -1,120 +1,141 @@
+using System.Numerics;
 using Rusty.Engine;
-using RustyPuzzle.Game.Counter;
+using Rusty.Engine.Debugging;
+using RustyPuzzle.Game.Board;
+using RustyPuzzle.Game.Content;
+using RustyPuzzle.Game.Interface;
+using RustyPuzzle.Game.Presentation;
+using RustyPuzzle.Game.Rooms;
 
 namespace RustyPuzzle.Game;
 
-public sealed class RustyPuzzleProduct : IEngineProduct
+/// <summary>
+/// The Engine product: loads the authored content, plays the first room of the authored order, turns
+/// admitted pointer presses and interface commands into board selections, and publishes the board scene
+/// and the interface projection.
+/// </summary>
+public sealed class RustyPuzzleProduct : IEngineProduct, IDebugCommandModuleSource
 {
-    private const string IncrementIntent = "increment";
-    private const string UiStreamId = "rusty-puzzle";
-    private const string UiContract = "rusty.puzzle.counter";
-    private const float DigitalIntentActiveThreshold = 0.5f;
-    private const uint RootNodeIndex = 0;
-    private const uint ValueNodeIndex = 1;
-    private const uint ValueKeyLength = 5;
-    private const uint ValueChildCount = 1;
-
     private readonly IEngineContext _engine;
-    private readonly CounterState _counter = new();
-    private readonly UiStream _uiStream;
-    private ulong _uiSequence;
-    private bool _started;
-    private bool _paused;
-    private bool _shutdown;
+    private readonly PuzzleContent _content;
+    private readonly BoardLayout _layout;
+    private readonly BoardCamera _camera;
+    private readonly BoardScene _scene;
+    private readonly PuzzleHud _hud;
+    private bool _disposed;
 
     public RustyPuzzleProduct(ProductCreateContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
         _engine = context.Engine;
-        _uiStream = _engine.Ui.OpenStream(new UiStreamRequest(UiStreamId, UiContract));
-    }
-
-    public void Start()
-    {
-        if (_shutdown)
+        try
         {
-            return;
+            _content = PuzzleContent.Load(context.Content);
+            _layout = new BoardLayout(_content.View);
+            _camera = new BoardCamera(_engine, _content.View);
+            _scene = new BoardScene(_engine.Graphics, _layout, _content.View);
+            _hud = new PuzzleHud(_engine.Ui, _content.Text);
+            Room = new RoomState(_content.Rooms[0]);
         }
-
-        _started = true;
-        _paused = false;
-        PublishCounter();
+        catch
+        {
+            Dispose();
+            throw;
+        }
     }
+
+    internal RoomState Room { get; }
+
+    internal BoardLayout Layout => _layout;
+
+    internal BoardCamera Camera => _camera;
+
+    internal PuzzleHud Hud => _hud;
+
+    public void Start() => Publish();
 
     public ProductUpdateResult Update(ProductUpdate update)
     {
-        if (!_started || _paused || _shutdown)
-        {
-            return ProductUpdateResult.None;
-        }
-
-        foreach (ProductInputEvent input in update.Input)
-        {
-            if (input.Kind != InputEventKind.DirectDigital
-                || !input.Intent.Span.SequenceEqual(IncrementIntentBytes)
-                || input.X <= DigitalIntentActiveThreshold)
-            {
-                continue;
-            }
-
-            _counter.Increment();
-        }
-
-        PublishCounter();
+        Apply(update.Input);
+        Publish();
         return ProductUpdateResult.None;
+    }
+
+    // Selecting is an interface fact, so the party list still answers while the runtime is paused.
+    public void HandlePausedIntents(ReadOnlySpan<ProductInputEvent> intents)
+    {
+        Apply(intents);
+        Publish();
     }
 
     public void Pause()
     {
-        if (_started && !_shutdown)
-        {
-            _paused = true;
-        }
     }
 
     public void Resume()
     {
-        if (_started && !_shutdown)
-        {
-            _paused = false;
-        }
     }
 
     public void Restart()
     {
-        if (_shutdown)
+        Room.Reset();
+        Publish();
+    }
+
+    public void Shutdown()
+    {
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
         {
             return;
         }
 
-        _counter.Reset();
-        _started = true;
-        _paused = false;
-        PublishCounter();
+        _disposed = true;
+        _scene?.Dispose();
+        _camera?.Dispose();
+        _hud?.Dispose();
     }
 
-    public void Shutdown() => _shutdown = true;
-
-    public void Dispose()
+    public void RegisterDebugCommands(IDebugCommandModuleRegistrar registrar)
     {
-        _shutdown = true;
-        _uiStream.Dispose();
+        PuzzleDebugCommands commands = new(this);
+        registrar.Register(new PlaytestDebugModule(commands.Inspect, commands.PlaytestAction, [], commands.Look));
+        registrar.Register(commands);
     }
 
-    private void PublishCounter()
+    /// <summary>Selects the cell drawn at a pointer position (normalized, bottom-left origin); off the board clears.</summary>
+    internal void PickAt(Vector2 point)
     {
-        _engine.Ui.PublishProjection(new UiProjection(_uiStream, ++_uiSequence, BuildUiValue()));
+        _camera.Frame(Room, _layout);
+        Cell? picked = _camera.Pick(Room, _layout, point);
+        Room.Select(picked);
     }
 
-    private UiValue BuildUiValue()
+    internal bool Apply(PuzzleCommand command) => command.ApplyTo(Room);
+
+    /// <summary>Shows the current room state in the scene, the camera and the interface.</summary>
+    internal void Publish()
     {
-        StructuredValueNode[] nodes =
-        [
-            new(StructuredValueKind.Object, 0, 0, 0, 0, 0, 0, 0, ValueChildCount),
-            new(StructuredValueKind.Number, 0, _counter.Value, 0, ValueKeyLength, 0, 0, 0, 0),
-        ];
-        return new UiValue(nodes, new uint[] { ValueNodeIndex }, RootNodeIndex, "value"u8.ToArray());
+        _camera.Frame(Room, _layout);
+        _scene.Publish(Room);
+        _hud.Publish(Room);
     }
 
-    private static ReadOnlySpan<byte> IncrementIntentBytes => "increment"u8;
+    private void Apply(ReadOnlySpan<ProductInputEvent> input)
+    {
+        foreach (ProductInputEvent item in input)
+        {
+            if (item is { Kind: InputEventKind.PointerButton, PointerButton: PointerButton.Primary, Edge: InputEdge.Pressed, HasPosition: true })
+            {
+                PickAt(new Vector2(item.X, item.Y));
+            }
+            else if (PuzzleCommand.From(item) is PuzzleCommand command)
+            {
+                Apply(command);
+            }
+        }
+    }
 }

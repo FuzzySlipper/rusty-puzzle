@@ -1,0 +1,7 @@
+{
+  "name": "wall",
+  "symbol": "#",
+  "passable": false,
+  "exit": false,
+  "look": { "colour": [0.16, 0.16, 0.2], "height": 0.7 }
+}

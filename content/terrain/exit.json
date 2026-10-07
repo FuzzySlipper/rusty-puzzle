@@ -1,0 +1,7 @@
+{
+  "name": "exit",
+  "symbol": "E",
+  "passable": true,
+  "exit": true,
+  "look": { "colour": [0.25, 0.62, 0.36], "height": 0.12 }
+}

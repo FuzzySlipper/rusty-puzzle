@@ -1,0 +1,7 @@
+{
+  "name": "floor",
+  "symbol": ".",
+  "passable": true,
+  "exit": false,
+  "look": { "colour": [0.42, 0.42, 0.45], "height": 0.12 }
+}

@@ -8,10 +8,11 @@ choosing, sequencing and combining those rules. Read the
 Rusty product. Tasks and implementation progress live in Den project
 `rusty-puzzle`.
 
-The code is still the counter bootstrap: C# owns a counter, a DOM button sends
-an `increment` intent, and Engine transports the counter projection to the UI.
-The packaged Engine owns the host, input, update loop, and browser shell. The
-board, party and rooms replace the counter through the Den tasks.
+C# loads the authored rooms, terrain and party from `content/`, draws the
+board in the Engine as placeholder primitives under a fitted overhead camera,
+and turns pointer presses and interface commands into board selections. The
+DOM companion shows the projected room, selection and party. The packaged
+Engine owns the host, input, update admission, renderer and browser shell.
 
 ## Setup
 
@@ -38,7 +39,8 @@ rusty install
 rusty dev --port 8787
 ```
 
-Open the URL printed by the host. The Increment button changes the counter.
+Open the URL printed by the host. The first room of the authored order opens;
+click a board cell or a party member to select it.
 `rusty dev` runs the pinned pair's runtime: CoreCLR loads the product, and
 changes to declared C#, UI, or content inputs rebuild and reload it. See
 `rusty dev --help` for `--bind-host`, `--live-debug`, and `--debugger`.
@@ -67,19 +69,29 @@ NativeAOT fidelity/release check:
 rusty build --aot
 ```
 
+The smoke test drives the product callbacks over the pinned Engine's real
+services, without a browser: content loading, the board, pointer picking,
+interface commands, restart and content errors.
+
+```bash
+dotnet run --project tests/RustyPuzzle.Smoke
+```
+
 ## Repository shape
 
 | Path | Responsibility |
 | --- | --- |
-| `src/RustyPuzzle.Game/` | Ordinary safe C# product, counter bootstrap state, and product metadata |
+| `src/RustyPuzzle.Game/` | Ordinary safe C# product: board, party, rooms, presentation, interface and product metadata |
 | `src/ui/main.js` | DOM presentation and semantic input |
-| `content/` | Product-authored content root |
+| `content/` | Product-authored content, one directory per domain ([authoring](docs/content.md)) |
+| `tests/RustyPuzzle.Smoke/` | Product callback smoke test over the Engine test host |
 | `Directory.Build.props` | Matched Engine SDK/runtime pin and default product project |
 | `docs/architecture.md` | Current ownership and data flow |
 | `docs/game-design.md` | Product direction: concept, party movement grammar, prototype scope |
 | `docs/reuse.md` | One-time sibling donors, copying procedure and incorporated provenance |
 | `.den-serve.json` | Playtest host configuration for the Den playtest service |
 | `docs/ui.md` | DOM companion contract |
+| `docs/content.md` | Content layout and authoring formats |
 | `docs/agent-review/` | Reusable review workflow and lane packets |
 
 The SDK generates the product's bind entry point inside its ordinary build;

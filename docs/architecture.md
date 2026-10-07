@@ -3,10 +3,11 @@
 > The product decides. The Engine guarantees.
 
 ```text
-Counter state and policy (C#)
+Authored content (content/)
+  -> typed domain records (C#: board, party, rooms, presentation, interface)
   -> Rusty.Engine safe SDK
   -> SDK-generated bind entry point and ABI
-  -> packaged Rust host, input, UI transport, and browser shell
+  -> packaged Rust host, input, renderer, UI transport, and browser shell
   -> DOM companion
 ```
 
@@ -14,28 +15,49 @@ Counter state and policy (C#)
 
 | Path or service | Responsibility |
 | --- | --- |
-| `src/RustyPuzzle.Game/Counter/CounterState.cs` | Bootstrap counter value, increment saturation, and reset policy (replaced by the board, party and room owners as they land) |
-| `src/RustyPuzzle.Game/RustyPuzzleProduct.cs` | Lifecycle callbacks, semantic input interpretation, and counter projection |
-| `src/RustyPuzzle.Game/RustyPuzzle.Game.csproj` | Explicit product entry, content/UI roots, intents, and host defaults |
-| `src/ui/main.js` | DOM button/label, intent submission, projection subscription, and UI cleanup |
-| `content/` | Product-authored data: rooms, party definitions and interface text as they are authored |
+| `src/RustyPuzzle.Game/RustyPuzzleProduct.cs` | Explicit composition and lifecycle: loads content, plays the first room of the authored order, routes admitted pointer presses and interface commands, publishes scene, camera and projection, registers debug modules |
+| `src/RustyPuzzle.Game/Content/` | `Authored`: strict source-generated JSON reads from the admitted `ProductContent` snapshot, errors naming the file and field. `PuzzleContent`: loads and validates each domain from its own directory |
+| `src/RustyPuzzle.Game/Board/` | `Cell`, terrain kinds (symbol, passable, exit, look) and `BoardGrid`, the room's terrain per cell |
+| `src/RustyPuzzle.Game/Party/` | Party member definitions (name, look) |
+| `src/RustyPuzzle.Game/Rooms/` | Authored room format and room order, interpretation of ASCII rows against the terrain and party vocabularies, and `RoomState`: the live placements and selection of the room being played, with a revision for republishing |
+| `src/RustyPuzzle.Game/Presentation/` | Board view tuning; `BoardLayout`, the one source of block geometry that drawing and picking share; `BoardCamera`, the orthographic camera fitted to the room from the surface aspect, and pointer picking through `CameraQueries.Ray`; `BoardScene`, the primitive appearances and published snapshot |
+| `src/RustyPuzzle.Game/Interface/` | Interface text templates; `PuzzleCommand`, the one `{action, ...}` payload vocabulary; `PuzzleHud`, the `UiValues.FromJson` projection; `PuzzleDebugCommands` and the `PlaytestDebugModule` adapter |
+| `src/RustyPuzzle.Game/RustyPuzzle.Game.csproj` | Product entry, content/UI roots, the `puzzle.command` payload intent, projection identity, `demand` lifecycle and unlocked cursor |
+| `src/ui/main.js` | DOM HUD: room, selection, status text and party buttons from the projection; sends the projected commands; UI cleanup |
+| `content/` | Product-authored data, one directory per domain ([content](content.md)) |
+| `tests/RustyPuzzle.Smoke/` | Callback smoke test over `EngineTestHost` with the content linked in |
 | Engine SDK/runtime | Generated interop, admitted updates/input, retained UI transport, host, renderer, and browser shell |
 
 ## Lifecycle and data flow
 
 The installed runtime loads the product assembly through its SDK-generated bind
-entry point. The bind checks
-the SDK/runtime ABI identity and constructs the product with
-`ProductCreateContext`. The product opens its UI stream through `IEngineContext.Ui`.
+entry point. The bind checks the SDK/runtime ABI identity and constructs the
+product with `ProductCreateContext`. Construction reads every content domain
+from the admitted loose-content snapshot and fails, naming the file, on any
+invalid authored value; it then creates the camera, scene appearances and UI
+stream, disposing what it made if any step fails.
 
-Engine calls `Start` and admits `ProductUpdate` callbacks. The DOM button
-submits the declared `increment` intent. C# interprets active direct-digital
-input, updates its counter, and publishes a typed `UiValue`. The DOM observes
-that projection and displays its number; it holds no authoritative counter.
+The product runs in `demand` lifecycle mode: the board is turn-based and has
+nothing to animate, so the Engine admits an `Update` when input arrives
+instead of at a fixed rate. Each update applies the admitted input in order:
+a primary pointer press with a position is turned into a world ray by the
+fitted camera and picks the nearest cell block (falling back to the board
+plane under the gaps between blocks; off the board clears the selection), and
+a `puzzle.command` payload is parsed into a typed command and applied to the
+room state. A malformed payload is a first-party defect and faults the
+runtime with the contract named. Paused interface claims reach
+`HandlePausedIntents` and take the same path.
 
-Engine owns pause/resume/restart/shutdown admission. Product callbacks apply
-local policy, such as resetting the counter on restart. Disposal releases the
-UI stream. Resource lifetimes and admitted update facts remain Engine-owned.
+After applying input the product publishes: the camera refits when the room
+or the surface size changed, the scene republishes its snapshot when the room
+state's revision changed, and the HUD republishes when the projected value
+changed. The projection carries every word the DOM shows (composed from
+content templates), each party button's ready-made command, and the payload
+intent identity, so the DOM keeps no vocabulary or state of its own.
+
+Engine owns pause/resume/restart/shutdown admission. Restart returns the room
+to its authored start. Disposal publishes an empty snapshot before releasing
+appearances, then releases the camera and UI stream.
 
 ## Build and host
 
